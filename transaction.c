@@ -19,6 +19,7 @@
 int setBalance(char* user);
 int deposit(long double amount);
 int withdraw(long double amount);
+int transfer(char* recipient, long double amount);
 
 /**
  * Sets the balance to the current user's
@@ -80,12 +81,22 @@ int withdraw(long double amount) {
 }
 
 int transfer(char* recipient, long double amount) {
+    if (amount > balance.balance) {
+        printf("NOT ENOUGH IN ACCOUNT TO WITHDRAW $%.2Lf", amount);
+        return 1;
+    }
     // find person from files
     // for testing purposes, finding random person
     Balance_t target;
     strcpy(target.username, "receiver");
     target.balance = 500.43;
 
-    
+    printf("username: %s balance before: %.2Lf\n", balance.username, balance.balance);
+    printf("username: %s balance before: %.2Lf\n", target.username, target.balance);
+    balance.balance -= amount;
+    target.balance += amount;
+    printf("username: %s balance after: %.2Lf\n", balance.username, balance.balance);
+    printf("username: %s balance after: %.2Lf\n", target.username, target.balance);
+
     return 0;
 }

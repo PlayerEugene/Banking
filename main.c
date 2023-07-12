@@ -60,19 +60,26 @@ int main() {
     setBalance(username);
 
     long double money;
-    printf("How much would you like to deposit?");
+    printf("How much would you like to deposit?\n");
     if (fgets(buffer, sizeof buffer, stdin) == NULL) {
         /* handle error */
     }
     sscanf(buffer, "%Lf", &money);
     deposit(money);
 
-    printf("How much would you like to withdraw?");
+    printf("How much would you like to withdraw?\n");
     if (fgets(buffer, sizeof buffer, stdin) == NULL) {
         /* handle error */
     }
     sscanf(buffer, "%Lf", &money);
     withdraw(money);
+
+    printf("How much would you like to transfer?\n");
+    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+        /* handle error */
+    }
+    sscanf(buffer, "%Lf", &money);
+    transfer("fakeuser", money);
 
     return 0;
 }

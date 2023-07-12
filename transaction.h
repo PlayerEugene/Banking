@@ -28,5 +28,6 @@ extern Balance_t balance;
 int setBalance(char* user);
 int deposit(long double amount);
 int withdraw(long double amount);
+int transfer(char* recipient, long double amount);
 
 #endif /* __TRANSACTION_H__ */

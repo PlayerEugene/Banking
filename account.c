@@ -136,15 +136,17 @@ int createAccount() {
 // how to handle backspace and other commands??
         char password[51];
         char confirm[51];
+        password[0] = '\0';
+        confirm[0] = '\0';
         printf("Enter Desired Password: \n");
         for (i = 0; i < 50; i++) {
             c = getch();
             // 8 is backspace in ASCII
             if (c == 8) {
-                if (i != 0) {
+                if (i > 0) {
                     password[i - 1] = '\0';
                     printf("\b\033[0J");
-                    i--;
+                    i -= 2;
                 }
             }
             // 13 is enter in ASCII
@@ -164,10 +166,10 @@ int createAccount() {
             c = getch();
             // 8 is backspace in ASCII
             if (c == 8) {
-                if (j != 0) {
+                if (j > 0) {
                     confirm[j - 1] = '\0';
                     printf("\b\033[0J");
-                    j-=2;
+                    j -= 2;
                 }
             }
             // 13 is enter in ASCII
@@ -188,8 +190,6 @@ int createAccount() {
             if (repeat_error == 0) {
                 printf("Passwords did not match. Try again!\n");
                 repeat_error = 1;
-                password[0] = '\0';
-                confirm[0] = '\0';
             }
         }
         else {
