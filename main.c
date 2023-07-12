@@ -22,6 +22,9 @@ Balance_t balance;
 int main() {
     char buffer[51];
     char choice; // define EXIT == 3 and set choice to EXIT.
+
+    system("cls");
+
     printf("WELCOME TO EUGENE's BANK!\n\n");
 
     printf("What would you like to do today?\n");
@@ -55,8 +58,21 @@ int main() {
     }
 
     setBalance(username);
-    deposit(100);
-    withdraw(300);
+
+    long double money;
+    printf("How much would you like to deposit?");
+    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+        /* handle error */
+    }
+    sscanf(buffer, "%Lf", &money);
+    deposit(money);
+
+    printf("How much would you like to withdraw?");
+    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+        /* handle error */
+    }
+    sscanf(buffer, "%Lf", &money);
+    withdraw(money);
 
     return 0;
 }

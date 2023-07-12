@@ -43,6 +43,6 @@ typedef struct Account_
 extern char username[51];
 
 int createAccount();
-void viewAccount(Account_t* user);
+void viewAccount(Account_t user);
 
 #endif /* __ACCOUNT_H__ */
