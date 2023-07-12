@@ -81,5 +81,11 @@ int withdraw(long double amount) {
 
 int transfer(char* recipient, long double amount) {
     // find person from files
+    // for testing purposes, finding random person
+    Balance_t target;
+    strcpy(target.username, "receiver");
+    target.balance = 500.43;
+
+    
     return 0;
 }

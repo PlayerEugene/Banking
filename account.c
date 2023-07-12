@@ -30,9 +30,9 @@ void viewAccount(Account_t* user);
  * @return      0 if successful, 1 otherwise
  */
 int createAccount() {
-    char password[51];
     int i;
     char c;
+    int repeat_error = 0;
     //FILE* fp;
     Account_t* user;
     char buffer[256];
@@ -133,19 +133,48 @@ int createAccount() {
     }
     sscanf(buffer, "%50s", &user->username);
 
-    printf("Enter Desired Password: \n");
-    for (i = 0; i < 50; i++) {
-        c = getch();
-        // 13 is ASCII Enter
-        if (c != 13) {
-            password[i] = c;
-            printf("*");
+    while (1) {
+// how to handle backspace and other commands??
+        char password[51];
+        char confirm[51];
+        printf("Enter Desired Password: \n");
+        for (i = 0; i < 50; i++) {
+            c = getch();
+            // 13 is ASCII Enter
+            if (c != 13) {
+                password[i] = c;
+                printf("*");
+            }
+            else {
+                break;
+            }
+        }
+        printf("\n");
+        
+        printf("Confirm Password: \n");
+        for (i = 0; i < 50; i++) {
+            c = getch();
+            // 13 is ASCII Enter
+            if (c != 13) {
+                confirm[i] = c;
+                printf("*");
+            }
+            else {
+                break;
+            }
+        }
+
+        if (strcmp(password, confirm) != 0) {
+            printf("\033[2K\033[A\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("Passwords did not match. Try again!\n");
+                repeat_error = 1;
+            }
         }
         else {
             break;
         }
     }
-    printf("\n");
 
 // FILE HANDLING WITH PASSWORD AND USERNAME NOT SURE HOW TO DO YET!!!!
 
