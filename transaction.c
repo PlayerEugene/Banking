@@ -80,5 +80,5 @@ int withdraw(long double amount) {
 }
 
 int transfer(char* recipient, long double amount) {
-    
+    return 0;
 }
