@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "stdio.h": "c",
-        "account.h": "c",
-        "typeinfo": "c"
-    }
-}
