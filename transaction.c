@@ -80,6 +80,6 @@ int withdraw(long double amount) {
 }
 
 int transfer(char* recipient, long double amount) {
-    
+    // find person from files
     return 0;
 }
