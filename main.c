@@ -18,6 +18,7 @@
 
 char username[51];
 Balance_t balance;
+Account_t curr_user;
 
 int main() {
     char buffer[51];

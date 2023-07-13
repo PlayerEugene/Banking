@@ -41,8 +41,9 @@ typedef struct Account_
 } Account_t;
 
 extern char username[51];
+extern Account_t curr_user;
 
 int createAccount();
-void viewAccount(Account_t user);
+void viewAccount();
 
 #endif /* __ACCOUNT_H__ */

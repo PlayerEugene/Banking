@@ -16,10 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <conio.h>
+#include <ctype.h>
 #include "account.h"
 
 int createAccount();
-void viewAccount(Account_t user);
+void viewAccount();
 
 
 /**
@@ -33,6 +34,8 @@ int createAccount() {
     int i, j;
     char c;
     int repeat_error = 0;
+    int syntax_error = 0;
+    int length_error = 0;
     //FILE* fp;
     Account_t user;
     char buffer[256];
@@ -45,42 +48,147 @@ int createAccount() {
 // MUST HANDLE INVALID FORMAT LATER SUCH AS ZIP TOO LONG (COULD OVERFLOW ARRAYS)
     printf("Creating a New Account\n\n");
  
-    printf("Enter First Name: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%s", &user.firstname);
- 
-    printf("Enter Last Name: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%50s", &user.lastname);
+    while(1) {
+        printf("Enter First Name: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%50s", &user.firstname);
 
-    printf("Enter Date of Birth: \n");
-    printf("Enter in MM/DD/YYYY format\n");
-    //ADD SAFETY TO EITHER THE SCANF OR THE TOKENIZATION  SUCH AS 
-    /*
-    char str[] ="- This, a sample string.";
-    char * pch;
-    printf ("Splitting string \"%s\" into tokens:\n",str);
-    pch = strtok (str," ,.-");
-    while (pch != NULL)
-    {
-        printf ("%s\n",pch);
-        pch = strtok (NULL, " ,.-");
+        // name has at least 1 char (make this into a defined magic number too)
+        if (strlen(user.firstname) < 2 || strlen(user.firstname) > 50) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.firstname); k++) {
+            if (!isalpha(user.firstname[k])) {
+                syntax_error = 1;
+                break;
+            }
+        }
+        // maybe split these to say appropriate errors later
+        // like invalid characters for syntax
+        // and too short/long for length
+        if (syntax_error || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (!repeat_error) {
+                printf("Invalid first name. Try again!\n");
+                repeat_error = 1;
+            }
+            syntax_error = 0;
+            length_error = 0;
+        }
+        else {
+            break;
+        }
     }
-    return 0;
-    */
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+
+    while(1) {
+        printf("Enter Last Name: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%50s", &user.lastname);
+
+        if (strlen(user.firstname) < 2 || strlen(user.firstname) > 50) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.lastname); k++) {
+            if (!isalpha(user.lastname[k])) {
+                syntax_error = 1;
+                break;
+            }
+        }
+        if (syntax_error || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("Invalid characters included in last name. Try again!\n");
+                repeat_error = 1;
+            }
+            length_error = 0;
+            syntax_error = 0;
+        }
+        else {
+            break;
+        }
+    }
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+
     char date[11];
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
+    while (1) {
+        int num_slash = 0;
+        printf("Enter Date of Birth: \n");
+        if (repeat_error == 0) {
+            printf("Enter in MM/DD/YYYY format\n");
+        }
+        //ADD SAFETY TO EITHER THE SCANF OR THE TOKENIZATION  SUCH AS 
+        /*
+        char str[] ="- This, a sample string.";
+        char * pch;
+        printf ("Splitting string \"%s\" into tokens:\n",str);
+        pch = strtok (str," ,.-");
+        while (pch != NULL)
+        {
+            printf ("%s\n",pch);
+            pch = strtok (NULL, " ,.-");
+        }
+        return 0;
+        */
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%10s", &date);
+
+        if (strlen(buffer) != 11) {
+            length_error = 1;
+        }
+
+        //change 2 and 5 to defines (spots where there should be slashes)
+        for (int k = 0; k < strlen(date); k++) {
+            if (k == 2 || k == 5) {
+                if (date[k] == '/') {
+                    num_slash++;
+                }
+                else {
+                    break;
+                }
+            }
+            else {
+                if (!isdigit(date[k])) {
+                    syntax_error = 1;
+                    break;
+                }
+            }
+        }
+
+        if (num_slash != 2 || length_error || syntax_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("\033[2K\033[A");
+                printf("Invalid date. Please put in MM/DD/YYYY format\n");
+                repeat_error = 1;
+            }
+            syntax_error = 0;
+            length_error = 0;
+        }
+        else {
+            break;
+        }
+        
     }
-    sscanf(buffer, "%10s", &date);
     strcpy(user.month, strtok(date, "/"));
     strcpy(user.day, strtok(NULL, "/"));
     strcpy(user.year, strtok(NULL, "/"));
- 
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+
     printf("Enter Social Security Number: \n");
     if (fgets(buffer, sizeof buffer, stdin) == NULL) {
         /* handle error */
@@ -196,13 +304,15 @@ int createAccount() {
             break;
         }
     }
+    repeat_error = 0;
 
+    curr_user = user;
 // FILE HANDLING WITH PASSWORD AND USERNAME NOT SURE HOW TO DO YET!!!!
 
 // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
     strcpy(username, user.username);
     printf("%s\n", username);
-    viewAccount(user);
+    viewAccount();
     return 0;
 }
 
@@ -211,16 +321,16 @@ int createAccount() {
  * 
  * Displays all account information and last 4 digits of SSN
 */
-void viewAccount(Account_t user) {
+void viewAccount() {
     printf("Account Info:\n");
-    printf("Account Username: %s\n", user.username);
-    printf("First Name: %s\nLast Name: %s\n", user.firstname, user.lastname);
-    printf("Date of Birth: %s/%s/%s\n", user.month, user.day, user.year);
-    printf("SSN: *****%s\n", user.ssn + strlen(user.ssn) - 4);
-    printf("Phone Number: %s\n", user.pnumber);
-    printf("E-mail: %s\nAddress: %s\n", user.email, user.address);
-    printf("Zip Code: %s\nState: %s\n", user.zip, user.state);
-    if (user.account_type == 'c') {
+    printf("Account Username: %s\n", curr_user.username);
+    printf("First Name: %s\nLast Name: %s\n", curr_user.firstname, curr_user.lastname);
+    printf("Date of Birth: %s/%s/%s\n", curr_user.month, curr_user.day, curr_user.year);
+    printf("SSN: *****%s\n", curr_user.ssn + strlen(curr_user.ssn) - 4);
+    printf("Phone Number: %s\n", curr_user.pnumber);
+    printf("E-mail: %s\nAddress: %s\n", curr_user.email, curr_user.address);
+    printf("Zip Code: %s\nState: %s\n", curr_user.zip, curr_user.state);
+    if (curr_user.account_type == 'c') {
         printf("Account Type: Checking\n");
     }
     else {
