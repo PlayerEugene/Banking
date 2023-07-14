@@ -37,6 +37,7 @@ int createAccount() {
     int syntax_error = 0;
     int length_error = 0;
     //FILE* fp;
+    FILE* state;
     Account_t user;
     char buffer[256];
     //fp = fopen("username.txt", "a");
@@ -56,7 +57,7 @@ int createAccount() {
         sscanf(buffer, "%50s", &user.firstname);
 
         // name has at least 1 char (make this into a defined magic number too)
-        if (strlen(user.firstname) < 2 || strlen(user.firstname) > 50) {
+        if (strlen(buffer) < 3 || strlen(buffer) > 51) {
             length_error = 1;
         }
 
@@ -93,7 +94,7 @@ int createAccount() {
         }
         sscanf(buffer, "%50s", &user.lastname);
 
-        if (strlen(user.firstname) < 2 || strlen(user.firstname) > 50) {
+        if (strlen(buffer) < 3 || strlen(buffer) > 51) {
             length_error = 1;
         }
 
@@ -106,7 +107,7 @@ int createAccount() {
         if (syntax_error || length_error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (repeat_error == 0) {
-                printf("Invalid characters included in last name. Try again!\n");
+                printf("Invalid last name. Try again!\n");
                 repeat_error = 1;
             }
             length_error = 0;
@@ -127,19 +128,7 @@ int createAccount() {
         if (repeat_error == 0) {
             printf("Enter in MM/DD/YYYY format\n");
         }
-        //ADD SAFETY TO EITHER THE SCANF OR THE TOKENIZATION  SUCH AS 
-        /*
-        char str[] ="- This, a sample string.";
-        char * pch;
-        printf ("Splitting string \"%s\" into tokens:\n",str);
-        pch = strtok (str," ,.-");
-        while (pch != NULL)
-        {
-            printf ("%s\n",pch);
-            pch = strtok (NULL, " ,.-");
-        }
-        return 0;
-        */
+
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
         }
@@ -189,50 +178,296 @@ int createAccount() {
     length_error = 0;
     repeat_error = 0;
 
-    printf("Enter Social Security Number: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%9s", &user.ssn);
- 
-    printf("Enter Phone Number: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%10s", &user.pnumber);
- 
-    printf("Enter E-mail: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%254s", &user.email);
+    while (1) {
+        printf("Enter Social Security Number: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%9s", &user.ssn);
 
-    printf("Enter Address: \n");
-    // ODD HERE WHY DIFFERENT?
-    if (fgets(user.address, 254, stdin) == NULL) {
-        /* handle error */
+        if (strlen(buffer) != 10) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.ssn); k++) {
+            if (!isdigit(user.ssn[k])) {
+                syntax_error = 1;
+                break;
+            }
+        }
+
+        
+        if (length_error || syntax_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("Invalid Social Security Number. Please try again!\n");
+                repeat_error = 1;
+            }
+            syntax_error = 0;
+            length_error = 0;
+        }
+        else {
+            break;
+        }
     }
-    user.address[strcspn(user.address, "\r\n")] = '\0';
-    //sscanf(buffer, "%225s", &user.address);
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+ 
+    while (1) {
+        printf("Enter Phone Number: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%10s", &user.pnumber);
+
+        if (strlen(buffer) != 11) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.pnumber); k++) {
+            if (!isdigit(user.pnumber[k])) {
+                syntax_error = 1;
+                break;
+            }
+        }
+
+        if (length_error || syntax_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("Invalid phone number. Please try again!\n");
+                repeat_error = 1;
+            }
+            syntax_error = 0;
+            length_error = 0;
+        }
+        else {
+            break;
+        }
+    }
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+ 
+    while (1) {
+        int has_at = 0;
+        int has_period = 0;
+        int has_name = 0;
+        int has_address = 0;
+        int has_domain = 0;
+        printf("Enter E-mail: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%254s", &user.email);
+
+        if (strlen(buffer) > 255 || strlen(buffer) < 6) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.email); k++) {
+            if (k == 0) {
+                if (user.email[k] != '@') {
+                    has_name = 1;
+                }
+            }
+            else if (has_at && !has_period) {
+                if (user.email[k] != '.') {
+                    has_address = 1;
+                }
+            }
+            else if (has_at && has_period) {
+                has_domain = 1;
+            }
+
+            if (user.email[k] == '@') {
+                // plus plus to check for multiple ats?
+                has_at = 1;
+            }
+            else if (user.email[k] == '.' && has_at) {
+                has_period = 1;
+            }
+
+        }
+
+        // could set the name at address period and domain to syntax error
+        if (!has_name || !has_at || !has_address
+            || !has_period || !has_domain || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("Invalid e-mail address. Please try again!\n");
+                repeat_error = 1;
+            }
+            length_error = 0;
+        }
+        else {
+            break;
+        }
+    }
+    length_error = 0;
+    repeat_error = 0;
+
+    while (1) {
+        int has_num = 0;
+        int has_nonalpha = 0;
+        int has_street = 0;
+        printf("Enter Street Address: \n");
+        // ODD HERE WHY DIFFERENT?
+        if (fgets(user.address, 254, stdin) == NULL) {
+            /* handle error */
+        }
+        user.address[strcspn(user.address, "\r\n")] = '\0';
+        //sscanf(buffer, "%225s", &user.address);
     
-    printf("Enter Zip Code: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%5s", &user.zip);
+        if (strlen(user.address) > 254 || strlen(user.address) < 3) {
+            length_error = 1;
+        }
 
-    printf("Enter State: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
+        for(int k = 0; k < strlen(user.address); k++) {
+            if (!has_num) {
+                if (user.address[k] == ' ') {
+                    has_num = 1;
+                }
+                else if (!isdigit(user.address[k])) {
+                    break;
+                }
+            }
+            else {
+                if (!isalpha(user.address[k]) && user.address[k] != ' ') {
+                    has_nonalpha++;
+                }
+            }
+        }
+        if (!has_nonalpha) {
+            has_street = 1;
+        }
+
+        if (!has_num || !has_street || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (repeat_error == 0) {
+                printf("Invalid street address. Please try again!\n");
+                repeat_error = 1;
+            }
+            length_error = 0;
+        }
+        else {
+            break;
+        }
     }
-    sscanf(buffer, "%2s", &user.state);
- 
-    printf("Enter Account Type: \n");
-    printf("Input 'c' for checking account and 's' for savings account\n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
+    length_error = 0;
+    repeat_error = 0;
+    
+    while (1) {
+        printf("Enter Zip Code: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%5s", &user.zip);
+
+        if (strlen(buffer) != 6) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.zip); k++) {
+            if (!isdigit(user.zip[k])) {
+                syntax_error = 1;
+                break;
+            }
+        }
+
+        if (syntax_error || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (!repeat_error) {
+                printf("Invalid zip code. Try again!\n");
+                repeat_error = 1;
+            }
+            syntax_error = 0;
+            length_error = 0;
+        }
+        else {
+            break;
+        }
     }
-    sscanf(buffer, "%c", &user.account_type);
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+
+    char buf[170];
+    state = fopen("states.txt", "r");
+    if (state == NULL) {
+        exit(0);
+    }
+    if (fgets(buf, 170, state) != NULL) {
+        // handle file error here
+    }
+    int invalid_state = 0;
+    while (1) {
+        printf("Enter State: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%2s", &user.state);
+
+        if (strlen(buffer) != 3) {
+            length_error = 1;
+        }
+        
+        user.state[0] = toupper(user.state[0]);
+        user.state[1] = toupper(user.state[1]);
+        if (strstr(buf, user.state) == NULL) {
+            invalid_state = 1;
+        }
+
+        if (invalid_state || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (!repeat_error) {
+                printf("Invalid state. Try again!\n");
+                repeat_error = 1;
+            }
+            length_error = 0;
+            invalid_state = 0;
+        }
+        else {
+            break;
+        }
+    }
+    fclose(state);
+    length_error = 0;
+    repeat_error = 0;
+
+    while (1) {
+        int valid_input = 0;
+        printf("Enter Account Type: \n");
+        printf("Input 'c' for checking account and 's' for savings account\n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%c", &user.account_type);
+
+        if (strlen(buffer) != 2) {
+            length_error = 1;
+        }
+
+        if (tolower(user.account_type) != 'c'
+            && tolower(user.account_type) != 's') {
+            valid_input = 1;
+        }
+
+        if (valid_input || length_error) {
+            printf("\033[2K\033[A\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (!repeat_error) {
+                printf("Invalid account type. Try again!\n");
+                repeat_error = 1;
+            }
+            length_error = 0;
+            valid_input = 0;
+        }
+        else {
+            break;
+        }
+    }
+    length_error = 0;
+    repeat_error = 0;
 
     printf("Enter Desired Username: \n");
     if (fgets(buffer, sizeof buffer, stdin) == NULL) {
