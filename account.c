@@ -83,6 +83,7 @@ int createAccount() {
             break;
         }
     }
+    user.firstname[0] = toupper(user.firstname[0]);
     syntax_error = 0;
     length_error = 0;
     repeat_error = 0;
@@ -117,6 +118,7 @@ int createAccount() {
             break;
         }
     }
+    user.lastname[0] = toupper(user.lastname[0]);
     syntax_error = 0;
     length_error = 0;
     repeat_error = 0;
@@ -419,12 +421,12 @@ int createAccount() {
     length_error = 0;
     repeat_error = 0;
 
-    char buf[170];
+    char buf[171];
     state = fopen("states.txt", "r");
     if (state == NULL) {
         exit(0);
     }
-    if (fgets(buf, 170, state) != NULL) {
+    if (fgets(buf, 171, state) != NULL) {
         // handle file error here
     }
     int invalid_state = 0;
@@ -496,40 +498,115 @@ int createAccount() {
     length_error = 0;
     repeat_error = 0;
 
-    printf("Enter Desired Username: \n");
-    if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-        /* handle error */
-    }
-    sscanf(buffer, "%50s", &user.username);
+    while (1) {
+        printf("Enter Desired Username: \n");
+        if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+        }
+        sscanf(buffer, "%50s", &user.username);
 
+        if (strlen(buffer) < 2 || strlen(buffer) > 51) {
+            length_error = 1;
+        }
+
+        for(int k = 0; k < strlen(user.username); k++) {
+            if (isspace(user.username[k])) {
+                syntax_error = 1;
+                break;
+            }
+        }
+        // maybe split these to say appropriate errors later
+        // like invalid characters for syntax
+        // and too short/long for length
+        if (syntax_error || length_error) {
+            printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+            if (!repeat_error) {
+                printf("Invalid username. Try again!\n");
+                repeat_error = 1;
+            }
+            syntax_error = 0;
+            length_error = 0;
+        }
+        else {
+            break;
+        }
+    }
+    syntax_error = 0;
+    length_error = 0;
+    repeat_error = 0;
+    
+    int pass_error = 0;
     while (1) {
 // how to handle backspace and other commands??
         char password[51];
         char confirm[51];
-        password[0] = '\0';
-        confirm[0] = '\0';
-        printf("Enter Desired Password: \n");
-        for (i = 0; i < 50; i++) {
-            c = getch();
-            // 8 is backspace in ASCII
-            if (c == 8) {
-                if (i > 0) {
-                    password[i - 1] = '\0';
-                    printf("\b\033[0J");
-                    i -= 2;
+
+        while(1) {
+            int has_upper = 0;
+            int has_lower = 0;
+            int has_num = 0;
+            int has_punct = 0;
+            password[0] = '\0';
+            confirm[0] = '\0';
+            printf("Enter Desired Password: \n");
+            for (i = 0; i < 50; i++) {
+                c = getch();
+                // 8 is backspace in ASCII
+                if (c == 8) {
+                    if (i > 0) {
+                        password[i - 1] = '\0';
+                        printf("\b\033[0J");
+                        i -= 2;
+                    }
+                }
+                // 13 is enter in ASCII
+                else if (c != 13) {
+                    password[i] = c;
+                    printf("*");  
+                }
+                else {
+                    break;
                 }
             }
-            // 13 is enter in ASCII
-            else if (c != 13) {
-                password[i] = c;
-                printf("*");
+            password[i] = '\0';
+            printf("\n");
+
+            if (strlen(password) < 9 || strlen(password) > 51) {
+                length_error = 1;
+            }
+
+            for (int k = 0; k < strlen(password); k++) {
+                if (isupper(password[k])) {
+                    has_upper = 1;
+                }
+                else if (islower(password[k])) {
+                    has_lower = 1;
+                }
+                else if (isdigit(password[k])) {
+                    has_num = 1;
+                }
+                else if (ispunct(password[k])) {
+                    has_punct = 1;
+                }
+            }
+
+            if (!has_upper || !has_lower || !has_num || !has_punct || length_error) {
+                printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+                if (!repeat_error) {
+                    if (pass_error) {
+                        printf("\033[2K\033[A\033[2K");
+                    }
+                    printf("Invalid password. Try again!\n");
+                    repeat_error = 1;
+                }
+                length_error = 0;
             }
             else {
                 break;
             }
         }
-        password[i] = '\0';
-        printf("\n");
+        length_error = 0;
+        repeat_error = 0;
         
         printf("Confirm Password: \n");
         for (j = 0; j < 50; j++) {
@@ -556,7 +633,7 @@ int createAccount() {
         //printf("first: %s, second: %s", password, confirm);
 
         if (strcmp(password, confirm) != 0) {
-            printf("\033[2K\033[A\033[2K\033[A\33[2K\033[A\33[2K\r");
+            printf("\033[2K\033[A\033[2K\033[A\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (repeat_error == 0) {
                 printf("Passwords did not match. Try again!\n");
                 repeat_error = 1;
@@ -565,6 +642,8 @@ int createAccount() {
         else {
             break;
         }
+        repeat_error = 0;
+        pass_error = 1;
     }
     repeat_error = 0;
 
@@ -573,7 +652,6 @@ int createAccount() {
 
 // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
     strcpy(username, user.username);
-    printf("%s\n", username);
     viewAccount();
     return 0;
 }
