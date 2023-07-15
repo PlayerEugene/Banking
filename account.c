@@ -124,6 +124,9 @@ int createAccount() {
     char date[11];
     while (1) {
         int num_slash = 0;
+        int invalid_month = 0;
+        int invalid_day = 0;
+        int invalid_year = 0;
         printf("Enter Date of Birth: \n");
         if (repeat_error == 0) {
             printf("Enter in MM/DD/YYYY format\n");
@@ -156,6 +159,8 @@ int createAccount() {
             }
         }
 
+
+
         if (num_slash != 2 || length_error || syntax_error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (repeat_error == 0) {
@@ -167,13 +172,35 @@ int createAccount() {
             length_error = 0;
         }
         else {
-            break;
+            strcpy(user.month, strtok(date, "/"));
+            strcpy(user.day, strtok(NULL, "/"));
+            strcpy(user.year, strtok(NULL, "/"));
+            // defines here too
+            if (atoi(user.month) > 12 || atoi(user.month) < 1) {
+                invalid_month = 1;
+            }
+            if (atoi(user.day) > 31 || atoi(user.day) < 1) {
+                invalid_day = 1;
+            }
+            // todays year and the oldest person alive right now
+            if (atoi(user.year) > 2023 || atoi(user.year) < 1907) {
+                invalid_year = 1;
+            }
+
+            if (invalid_month || invalid_day || invalid_year) {
+                printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
+                if (repeat_error == 0) {
+                    printf("\033[2K\033[A");
+                    printf("Invalid date. Please put in MM/DD/YYYY format\n");
+                    repeat_error = 1;
+                }
+            }
+            else {
+                break;
+            }
         }
         
     }
-    strcpy(user.month, strtok(date, "/"));
-    strcpy(user.day, strtok(NULL, "/"));
-    strcpy(user.year, strtok(NULL, "/"));
     syntax_error = 0;
     length_error = 0;
     repeat_error = 0;
