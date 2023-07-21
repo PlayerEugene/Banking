@@ -429,7 +429,10 @@ static void set_email(Account_t* user) {
         }
 
         for(int k = 0; k < strlen(user->email); k++) {
-            if (k == 0) {
+            if(isspace(user->email[k])) {
+                syntax_error = 1;
+            }
+            else if (k == 0) {
                 if (user->email[k] != '@') {
                     has_name = 1;
                 }
@@ -455,18 +458,20 @@ static void set_email(Account_t* user) {
 
         // could set the name at address period and domain to syntax error
         if (!has_name || !has_at || !has_address
-            || !has_period || !has_domain || length_error) {
+            || !has_period || !has_domain || length_error || syntax_error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (repeat_error == 0) {
                 printf("Invalid e-mail address. Please try again!\n");
                 repeat_error = 1;
             }
+            syntax_error = 0;
             length_error = 0;
         }
         else {
             break;
         }
     }
+    syntax_error = 0;
     length_error = 0;
     repeat_error = 0;
 }
@@ -605,6 +610,9 @@ static void set_state(Account_t* user) {
         
         user->state[0] = toupper(user->state[0]);
         user->state[1] = toupper(user->state[1]);
+        if(isspace(user->state[0]) || isspace(user->state[1])) {
+            invalid_state = 1;
+        }
         if (strstr(buf, user->state) == NULL) {
             invalid_state = 1;
         }
