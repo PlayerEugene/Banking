@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 07/20/23  EL  Added file handling to store user data and password
  * 07/16/23  EL  Refactored createAccount() to have separate functions
  * 07/15/23  EL  Added password requirements and length requirements to all
  * 07/10/23  EL  Added account creation and viewing and additional requirements
@@ -94,12 +95,10 @@ int createAccount() {
     set_password(&user, pass);
     fclose(pass);
 
-// FILE HANDLING WITH PASSWORD AND USERNAME NOT SURE HOW TO DO YET!!!!
-
 // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
     fprintf(fp, "%s %s %s %s %s %s %s %s %s %s %s %s %c\n", user.username, user.firstname,
         user.lastname, user.month, user.day, user.year, user.ssn, user.pnumber,
-        user.email, user.address, user.zip, user.state, user.account_type);
+        user.email, user.zip, user.state, user.account_type, user.address);
     
     fclose(fp);
     curr_user = user;
