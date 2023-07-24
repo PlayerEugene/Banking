@@ -8,13 +8,14 @@
 #
 # DATE      WHO DESCRIPTION
 # -----------------------------------------------------------------------------
+# 07/24/23  EL  Added Source Files
 # 07/11/23  EL  Initial Commit
 # 
 ################################################################################
 
 CC = gcc
 CFLAGS = -I.
-SRCS = main.c account.c transaction.c
+SRCS = main.c account.c transaction.c login.c
 
 make: $(SRCS)
 	$(CC) -o main $(SRCS) $(CFLAGS)

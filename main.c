@@ -5,6 +5,7 @@
  * 
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
+ * 07/24/23  EL  Added login file to main
  * 07/10/23  EL  Changed account creation to own file
  * 07/08/23  EL  Added account testing
  * 07/07/23  EL  Initial Commit
@@ -15,6 +16,7 @@
 #include <windows.h>
 #include "account.h"
 #include "transaction.h"
+#include "login.h"
 
 char username[51];
 Balance_t balance;
@@ -45,9 +47,7 @@ int main() {
 
         case '2':
         // depositing for now for testing
-            setBalance(username);
-            deposit(100);
-            withdraw(200);
+            login();
             break;
     
         case '3':

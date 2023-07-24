@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 07/21/23  EL  Added space protection for easier file reading
  * 07/20/23  EL  Added file handling to store user data and password
  * 07/16/23  EL  Refactored createAccount() to have separate functions
  * 07/15/23  EL  Added password requirements and length requirements to all
@@ -25,6 +26,7 @@
 int createAccount();
 void viewAccount();
 
+// maybe set to int in case of failure
 static void set_fname(Account_t* user);
 static void set_lname(Account_t* user);
 static void set_date(Account_t* user);
