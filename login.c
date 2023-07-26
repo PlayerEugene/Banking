@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 07/25/23  EL  Added logout functionality
  * 07/24/23  EL  Added login functionality
  * 07/21/23  EL  Initial Commit
  */
@@ -16,6 +17,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <conio.h>
+#include "login.h"
+
+static const Account_t EmptyAccount;
+static const Balance_t EmptyBalance;
 
 int login();
 int logout();
@@ -74,13 +79,21 @@ int login() {
         return 1;
     }
 
+    int found = 1;
     while (fgets(line, sizeof(line), fp) != NULL) {
-        if (strstr(line, username) != NULL) {
+        token = strtok(line, " ");
+        if (!strcmp(token, username)) {
+            found = 0;
             break;
         }
     }
 
-    token = strtok(line, " ");
+    // ADD LOOP FOR IF INVALID USERNAME SO YTOU CAN TRY INIFINITE TIMES!
+    if (found) {
+        printf("Could not find username\n");
+        return -1;
+    }
+
     token = strtok(NULL, " ");
 
     int i;
@@ -149,5 +162,8 @@ int login() {
 }
 
 int logout() {
-
+    strcpy(username, "");
+    curr_user = EmptyAccount;
+    balance = EmptyBalance;
+    return 0;
 }
