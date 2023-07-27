@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 07/27/23  EL  Fixed password backspace inconsistency
  * 07/26/23  EL  Added documentation
  * 07/25/23  EL  Added logout functionality
  * 07/24/23  EL  Added login functionality
@@ -46,62 +47,41 @@ int login() {
     FILE* fp;
     char line[256];
     char* token;
+    int found = 1;
+    int repeat = 0;
 
-    while (1) {
+    while (found) {
         printf("Enter Username: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
         }
         sscanf(buffer, "%50s", username);
 
-        if (strlen(buffer) < 2 || strlen(buffer) > 51) {
-            length_error = 1;
+        fp = fopen("userpass.txt", "r");
+
+        if (fp == NULL) {
+            printf("Couldn't open file\n");
+            return 1;
         }
 
-        for(int k = 0; k < strlen(username); k++) {
-            if (isspace(username[k])) {
-                syntax_error = 1;
+        
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            token = strtok(line, " ");
+            if (!strcmp(token, username)) {
+                found = 0;
                 break;
             }
         }
-        if (syntax_error || length_error) {
+        if (found) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (!repeat_error) {
-                printf("Invalid username. Try again!\n");
-                repeat_error = 1;
+            if (!repeat) {
+                printf("Could not find username\n");\
+                repeat = 1;
             }
-            syntax_error = 0;
-            length_error = 0;
-        }
-        else {
-            break;
         }
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
-
-    fp = fopen("userpass.txt", "r");
-
-    if (fp == NULL) {
-        printf("Couldn't open file\n");
-        return 1;
-    }
-
-    int found = 1;
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        token = strtok(line, " ");
-        if (!strcmp(token, username)) {
-            found = 0;
-            break;
-        }
-    }
-
-    // ADD LOOP FOR IF INVALID USERNAME SO YTOU CAN TRY INIFINITE TIMES!
-    if (found) {
-        printf("Could not find username\n");
-        return -1;
-    }
+    found = 0;
+    repeat = 0;
 
     token = strtok(NULL, " ");
 
@@ -115,10 +95,15 @@ int login() {
             c = getch();
             // 8 is backspace in ASCII
             if (c == 8) {
-                if (i > 0) {
+                if (i >= 0) {
                     password[i - 1] = '\0';
                     printf("\b\033[0J");
-                    i -= 2;
+                    if (i == 0) {
+                        i--;
+                    }
+                    else {
+                        i -= 2;
+                    }
                 }
             }
             // 13 is enter in ASCII
