@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 07/26/23  EL  Added documentation
  * 07/25/23  EL  Added logout functionality
  * 07/24/23  EL  Added login functionality
  * 07/21/23  EL  Initial Commit
@@ -25,6 +26,14 @@ static const Balance_t EmptyBalance;
 int login();
 int logout();
 
+/**
+ * Logs into an account
+ * 
+ * Checks file to see if username and corresponding
+ * password exists
+ * 
+ * @return 1 if login error, 0 if successful
+*/
 int login() {
     char username[51];
     char password[51];
@@ -124,9 +133,14 @@ int login() {
         password[i] = '\0';
         printf("\n");
 
+        //printf("%s %s %d", password, token, strcmp(token, password));
+
         if (strlen(password) < 9 || strlen(password) > 51) {
             length_error = 1;
         }
+
+        // getting rid of newline at the end of password
+        token[strcspn(token, "\r\n")] = '\0';
 
         if (strcmp(token, password)) {
             syntax_error = 1;
@@ -161,6 +175,13 @@ int login() {
     return 0;
 }
 
+/**
+ * Logs out of the account
+ * 
+ * Resets the username, current user, and balance
+ * 
+ * @return 0
+*/
 int logout() {
     strcpy(username, "");
     curr_user = EmptyAccount;

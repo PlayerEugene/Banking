@@ -15,7 +15,7 @@
 
 CC = gcc
 CFLAGS = -I.
-SRCS = main.c account.c transaction.c login.c
+SRCS = main.c account.c transaction.c login.c data_encoder.c data_decoder.c
 
 make: $(SRCS)
 	$(CC) -o main $(SRCS) $(CFLAGS)

@@ -1,5 +1,5 @@
 /**
- * @file main.h
+ * @file main.c
  *
  * @author Eugene Lee
  * 
@@ -65,6 +65,7 @@ int main() {
         printf("1 - Withdraw\n");
         printf("2 - Deposit\n");
         printf("3 - Transfer\n");
+        printf("4 - View Account\n");
         printf("Any other key - Logout\n");
 
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
@@ -100,6 +101,14 @@ int main() {
                 }
                 sscanf(buffer, "%Lf", &money);
                 transfer("fakeuser", money);
+                break;
+
+            case '4':
+                viewAccount();
+                printf("Press any key to leave\n");
+                if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+                    /* handle error */
+                }
                 break;
 
             default:

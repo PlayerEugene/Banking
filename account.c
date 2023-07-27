@@ -22,6 +22,8 @@
 #include <conio.h>
 #include <ctype.h>
 #include "account.h"
+#include "data_encoder.h"
+#include "data_decoder.h"
 
 int createAccount();
 void viewAccount();
@@ -93,19 +95,20 @@ int createAccount() {
 
     set_username(&user);
     
-    fprintf(pass, "%s ", user.username);
+    fprintf(pass, "%s ", user.username); // caesar
     set_password(&user, pass);
     fclose(pass);
-
+    
 // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
-    fprintf(fp, "%s %s %s %s %s %s %s %s %s %s %s %s %c\n", user.username, user.firstname,
-        user.lastname, user.month, user.day, user.year, user.ssn, user.pnumber,
+    fprintf(fp, "%s %s %s %s %s %s %s %s %s %s %s %c %s\n", user.username, caesar_encrypt(user.firstname),
+        caesar_encrypt(user.lastname), user.month, user.day, user.year, user.ssn, user.pnumber,
         user.email, user.zip, user.state, user.account_type, user.address);
     
     fclose(fp);
     curr_user = user;
-    strcpy(username, user.username);
-    viewAccount();
+    caesar_decrypt(user.firstname);
+    caesar_decrypt(user.lastname);
+    strcpy(username, caesar_decrypt(user.username));
     return 0;
 }
 
