@@ -120,7 +120,7 @@ int createAccount() {
 void viewAccount() {
     printf("Account Info:\n");
     printf("Account Username: %s\n", curr_user.username);
-    printf("First Name: %s\nLast Name: %s\n", curr_user.firstname, curr_user.lastname);
+    printf("First Name: %s\nLast Name: %s\n", caesar_decrypt(curr_user.firstname), caesar_decrypt(curr_user.lastname));
     printf("Date of Birth: %s/%s/%s\n", curr_user.month, curr_user.day, curr_user.year);
     printf("SSN: *****%s\n", curr_user.ssn + strlen(curr_user.ssn) - 4);
     printf("Phone Number: %s\n", curr_user.pnumber);

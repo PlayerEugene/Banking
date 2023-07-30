@@ -16,10 +16,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <conio.h>
 #include "login.h"
+#include "data_decoder.h"
 
 static const Account_t EmptyAccount;
 static const Balance_t EmptyBalance;
@@ -49,6 +51,10 @@ int login() {
     char* token;
     int found = 1;
     int repeat = 0;
+
+    system("cls");
+
+    printf("Logging in\n\n");
 
     while (found) {
         printf("Enter Username: \n");
@@ -118,8 +124,6 @@ int login() {
         password[i] = '\0';
         printf("\n");
 
-        //printf("%s %s %d", password, token, strcmp(token, password));
-
         if (strlen(password) < 9 || strlen(password) > 51) {
             length_error = 1;
         }
@@ -127,7 +131,7 @@ int login() {
         // getting rid of newline at the end of password
         token[strcspn(token, "\r\n")] = '\0';
 
-        if (strcmp(token, password)) {
+        if (strcmp(token, password)) { // decrypt token here
             syntax_error = 1;
         }
 
@@ -156,6 +160,29 @@ int login() {
         printf("Failed Login\n");
         return 1;
     }
+
+    // LOAD INFORMATION INTO curr_user
+    FILE* user_data;
+    char* user_found;
+    Account_t load_user;
+    user_data = fopen("userpass.txt", "r");
+
+    if (user_data == NULL) {
+        printf("Couldn't open user data file\n");
+        return 1;
+    }
+
+    
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        user_found = strtok(line, " ");
+        if (!strcmp(user_found, username)) {
+            found = 0;
+            break;
+        }
+    }
+
+    strcpy(load_user.username, user_found);
+    // do rest
 
     return 0;
 }

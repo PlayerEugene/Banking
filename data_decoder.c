@@ -33,7 +33,6 @@ char* caesar_decrypt_shift(char* text, int shift) {
 }
 
 char* caesar_decrypt(char* text) {
-    printf("hi %s\n", text);
     int index = 0;
     while (text[index] != '\0') {
         // Exclude spaces
