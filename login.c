@@ -26,6 +26,7 @@
 static const Account_t EmptyAccount;
 static const Balance_t EmptyBalance;
 
+// Function declarations
 int login();
 int logout();
 

@@ -16,6 +16,7 @@
 #include <string.h>
 #include "transaction.h"
 
+// Function declarations
 int setBalance(char* user);
 int deposit(long double amount);
 int withdraw(long double amount);

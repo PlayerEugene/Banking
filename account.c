@@ -25,6 +25,7 @@
 #include "data_encoder.h"
 #include "data_decoder.h"
 
+// Function declarations
 int createAccount();
 void viewAccount();
 

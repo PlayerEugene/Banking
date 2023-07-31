@@ -14,11 +14,11 @@
 ################################################################################
 
 CC = gcc
-CFLAGS = -I.
+# CFLAGS = -I.
 SRCS = main.c account.c transaction.c login.c data_encoder.c data_decoder.c
 
 make: $(SRCS)
-	$(CC) -o main $(SRCS) $(CFLAGS)
+	$(CC) -o main $(SRCS) -I"C:\Users\eugen\Downloads\projects\gmp-6.3.0" -L"C:\Users\eugen\Downloads\projects\gmp-6.3.0\.libs" -lgmp
 
 .PHONY: clean
 
