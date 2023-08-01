@@ -15,7 +15,7 @@
 
 CC = gcc
 # CFLAGS = -I.
-SRCS = main.c account.c transaction.c login.c data_encoder.c data_decoder.c
+SRCS = main.c account.c transaction.c login.c data_encoder.c data_decoder.c rsa.c
 
 make: $(SRCS)
 	$(CC) -o main $(SRCS) -I"C:\Users\eugen\Downloads\projects\gmp-6.3.0" -L"C:\Users\eugen\Downloads\projects\gmp-6.3.0\.libs" -lgmp
