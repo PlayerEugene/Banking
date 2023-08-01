@@ -14,9 +14,19 @@
 #include <stdio.h>
 #include "../gmp-6.3.0/gmp.h"
 
-int rsa_keygen();
-void rsa_encrypt(const mpz_t message, const mpz_t n, const mpz_t e, mpz_t result);
-void rsa_decrypt(const mpz_t ciphertext, const mpz_t n, const mpz_t d, mpz_t result);
+/**
+ * RSA generated key
+*/
+typedef struct Key_
+{
+    mpz_t n; // RSA modulus
+    mpz_t e; // RSA public exponent
+    mpz_t d; // RSA private exponent
+} Key_t;
+
+Key_t rsa_keygen();
+void rsa_encrypt(const mpz_t message, const Key_t key, mpz_t result);
+void rsa_decrypt(const mpz_t ciphertext, const Key_t key, mpz_t result);
 static void select_rsa_prime(mpz_t prime);
 static int miller_rabin_test(const mpz_t n, int k);
 static int fermat_test(const mpz_t n, int k);

@@ -20,7 +20,7 @@
 #include "rsa.h"
 
 // Function declarations
-int rsa_keygen();
+Key_t rsa_keygen();
 static void select_rsa_prime(mpz_t prime);
 static int miller_rabin_test(const mpz_t n, int k);
 static int fermat_test(const mpz_t n, int k);
@@ -28,38 +28,51 @@ static void n_bit_random_odd_number(int n, mpz_t result);
 
 // RSA Encryption
 /**
- * Encrypts a message
+ * Encrypts a message using RSA public key encryption
  * 
- * Takes message of type mpz_t (there are string to mpz_t conversions
- * and uses the public key to encrypt the message
+ * The `message` parameter represents the data to be encrypted. It is of type mpz_t,
+ * which can be converted from various formats, such as character strings using
+ * GMP library functions like mpz_set_str.
  * 
- * @param message the message to be encrypted
- * @param n the product of the two prime numbers for RSA
- * @param e the public exponent
- * @param result the location of the encrypted message
+ * @param message The message to be encrypted (as an mpz_t variable).
+ * @param key The RSA public key containing the modulus (n) and the public exponent (e).
+ * @param result The location to store the encrypted message (as an mpz_t variable).
+ *              The encrypted message will be stored in this variable.
 */
-void rsa_encrypt(const mpz_t message, const mpz_t n, const mpz_t e, mpz_t result) {
-    mpz_powm(result, message, e, n);
+void rsa_encrypt(const mpz_t message, const Key_t key, mpz_t result) {
+    mpz_powm(result, message, key.e, key.n);
 }
 
 // RSA Decryption
 /**
- * Encrypts a message
+ * Decrypts a ciphertext using RSA private key decryption
  * 
- * Takes message of type mpz_t (there are string to mpz_t conversions
- * and uses the public key to encrypt the message
+ * Takes ciphertext as a parameter which is the data to be decrypted.
+ * It is in the form of mpz_t which can be changed to a string using
+ * mpz_set_str.
  * 
- * @param message the message to be encrypted
- * @param n the product of the two prime numbers for RSA
- * @param e the public exponent
- * @param result the location of the encrypted message
+ * @param ciphertext the ciphertext to be decrypted (as mpz_t)
+ * @param key the RSA private key which contains modulus n and the private exponent d.
+ * @param result the location of the decrypted message
 */
-void rsa_decrypt(const mpz_t ciphertext, const mpz_t n, const mpz_t d, mpz_t result) {
-    mpz_powm(result, ciphertext, d, n);
+void rsa_decrypt(const mpz_t ciphertext, const Key_t key, mpz_t result) {
+    mpz_powm(result, ciphertext, key.d, key.n);
 }
 
-// RSA HERE
-int rsa_keygen() {
+// RSA Key Generation
+/**
+ * Generates RSA key pairs for encryption and decryption.
+ * 
+ * This function generates the public and private keys (n, e) and (n, d) for RSA encryption
+ * and decryption, respectively. It uses two large prime numbers (p and q) to compute the 
+ * modulus (n) and other necessary values (lambda, e, d) for the key pairs.
+ * 
+ * @return returns a Key_t struct containing modulus n,
+ *         public exponent e, and private exponent d. 
+*/
+Key_t rsa_keygen() {
+    Key_t new_key;
+    mpz_inits(new_key.n, new_key.e, new_key.d, NULL);
     mpz_t p, q, n, lambda, e, d;
     mpz_inits(p, q, n, lambda, e, d, NULL);
     
@@ -106,15 +119,30 @@ int rsa_keygen() {
     mpz_clear(q);
     mpz_clear(lambda);
 
-    // REST OF RSA HERE!!!
-    
+    // Set the RSA key for the return struct
+    mpz_set(new_key.n, n);
+    mpz_set(new_key.e, e);
+    mpz_set(new_key.d, d);
 
     // Clear memory
+    mpz_clear(d);
     mpz_clear(n);
     mpz_clear(e);
+
+    return new_key;
 }
 
-// create new method that chooses primes?
+/**
+ * Generates random 2048 bit prime numbers for RSA key generation
+ * 
+ * This function generates 2048 bit potential prime numbers through
+ * probabalistic algorithms such as Fermat test and Miller Rabin test.
+ * More specifically, this function creates a random 2048 bit odd number
+ * and then runs Fermat test once to check if the number is a potential prime
+ * and then runs 50 Miller Rabin tests to check if the number is prime.
+ * 
+ * @param prime the location to store the prime number (as mpz_t)
+*/
 static void select_rsa_prime(mpz_t prime) {
     int fermat_pass = 0;
     int mr_pass = 0;
@@ -125,11 +153,22 @@ static void select_rsa_prime(mpz_t prime) {
             fermat_pass = fermat_test(prime, 1);
         }
         fermat_pass = 0;
-        // HOW MANY MR TESTS TO RUN?
         mr_pass = miller_rabin_test(prime, 50);
     }
 }
 
+/**
+ * Uses the Miller Rabin test to check for probable primes
+ * 
+ * This function uses the Miller Rabin test in order to
+ * check for guarenteed composite numbers. If the test
+ * find that the number is not composite, then we have a
+ * number that is probably prime
+ * 
+ * @param n the potentially prime number to test
+ * @param k the number of times to run Miller Rabin
+ * @return 1 if composite, 0 if potentiall prime
+*/
 static int miller_rabin_test(const mpz_t n, int k) {
     mpz_t d, s, a, x, y, n_minus_1;
     mpz_inits(d, s, a, x, y, n_minus_1, NULL);
@@ -211,6 +250,16 @@ static int miller_rabin_test(const mpz_t n, int k) {
     return 0;
 }
 
+/**
+ * Uses Fermat test in order to check for prime numbers
+ * 
+ * This function runs Fermat test in order to check for potentially
+ * prime numbers.
+ * 
+ * @param n the potentially prime number to be tested
+ * @param k the number of times to run Fermat test
+ * @return 1 if composite, and 0 if potentially prime
+*/
 static int fermat_test(const mpz_t n, int k) {
     mpz_t a, n_minus_1, result;
     mpz_inits(a, n_minus_1, result, NULL);
@@ -245,6 +294,14 @@ static int fermat_test(const mpz_t n, int k) {
     return 0;
 }
 
+/**
+ * Selects a random n-bit odd number
+ * 
+ * This function generates a random n-bit number and sets the value to be odd.
+ * 
+ * @param n the length in bits that the number should be
+ * @param result the location to store the n-bit random odd number
+*/
 void n_bit_random_odd_number(int n, mpz_t result) {
     gmp_randstate_t state;
     gmp_randinit_default(state);
