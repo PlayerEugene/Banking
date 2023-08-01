@@ -24,6 +24,10 @@
 #include "account.h"
 #include "data_encoder.h"
 #include "data_decoder.h"
+#include "..\phc-winner-argon2\include\argon2.h"
+
+// Defines
+#define ARGON2_OUT_LEN 32
 
 // Function declarations
 int createAccount();
@@ -41,7 +45,7 @@ static void set_zip(Account_t* user);
 static void set_state(Account_t* user);
 static void set_account(Account_t* user);
 static void set_username(Account_t* user);
-static void set_password(Account_t* user, FILE* pass);
+static void set_password(Account_t* user, FILE* pass, Login_t* info);
 
 static int repeat_error = 0;
 static int syntax_error = 0;
@@ -60,8 +64,9 @@ int createAccount() {
     FILE* fp;
     FILE* pass;
     Account_t user;
+    Login_t info;
     fp = fopen("userdata.txt", "a");
-    pass = fopen("userpass.txt", "a");
+    pass = fopen("userpass.txt", "ab");
 
     if (fp == NULL || pass == NULL) {
         printf("Couldn't open file\n");
@@ -95,9 +100,9 @@ int createAccount() {
     set_account(&user);
 
     set_username(&user);
+    strcpy(info.username, user.username);
     
-    fprintf(pass, "%s ", user.username); // caesar
-    set_password(&user, pass);
+    set_password(&user, pass, &info);
     fclose(pass);
     
 // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
@@ -724,6 +729,7 @@ static void set_username(Account_t* user) {
             length_error = 0;
         }
         else {
+            
             break;
         }
     }
@@ -733,13 +739,45 @@ static void set_username(Account_t* user) {
 }
 
 /**
+ * Generates a salt value
+ * 
+ * Creates a random salt value of 16 bits for the hashing
+ * 
+ * @param salt the location to store the salt
+ * @param salt_len the length of the salt 
+*/
+void generate_salt(uint8_t* salt, size_t salt_len) {
+    for (size_t i = 0; i < salt_len; i++) {
+        salt[i] = rand() % 256;
+    }
+}
+
+/**
+ * Prints strings in hex
+ * 
+ * Takes a character array and pritns each value as a hexadecimal
+ * value
+ * 
+ * @param data the character array to be read
+ * @param length the length of the array
+*/
+void printHex(const unsigned char* data, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+        printf("%02X", data[i]);
+    }
+    printf("\n");
+}
+
+/**
  * Sets the password
  * 
  * Requests the user to input password and inserts it into user
  * 
  * @param user the struct to set the password to
+ * @param pass the file to put the password in
+ * @param info the struct containing the contents to put into the file
 */
-static void set_password(Account_t* user, FILE* pass) {
+static void set_password(Account_t* user, FILE* pass, Login_t* info) {
     int i, j;
     char c;
 
@@ -763,7 +801,12 @@ static void set_password(Account_t* user, FILE* pass) {
                     if (i > 0) {
                         password[i - 1] = '\0';
                         printf("\b\033[0J");
-                        i -= 2;
+                        if (i == 0) {
+                            i--;
+                        }
+                        else {
+                            i -= 2;
+                        }
                     }
                 }
                 // 13 is enter in ASCII
@@ -823,7 +866,12 @@ static void set_password(Account_t* user, FILE* pass) {
                 if (j > 0) {
                     confirm[j - 1] = '\0';
                     printf("\b\033[0J");
-                    j -= 2;
+                    if (j == 0) {
+                        j--;
+                    }
+                    else {
+                        j -= 2;
+                    }
                 }
             }
             // 13 is enter in ASCII
@@ -845,7 +893,31 @@ static void set_password(Account_t* user, FILE* pass) {
             }
         }
         else {
-            fprintf(pass, "%s\n", password);
+            char password_hash[ARGON2_OUT_LEN]; // Array to store the hash result
+            //const char* salt = user->username;
+            uint8_t salt[16];
+            generate_salt(salt, 16);
+            const int t_cost = 3; // Time cost parameter
+            const int m_cost = 1 << 16; // Memory cost parameter
+            const int parallelism = 1; // Parallelism factor
+
+            int ret = argon2_hash(t_cost, m_cost, parallelism, password, strlen(password),
+                                salt, strlen(salt), password_hash, ARGON2_OUT_LEN, NULL, 0, Argon2_i, ARGON2_VERSION_NUMBER);
+            if (ret != ARGON2_OK) {
+                printf("Error hashing password: %s\n", argon2_error_message(ret));
+                // Handle error and return if necessary
+                return;
+            }
+
+            /*printf("Hashed Password: ");
+            printHex(password_hash, ARGON2_OUT_LEN);
+
+            printf("Salt: ");
+            printHex(salt, 16);*/
+
+            memcpy(info->password, password_hash, sizeof(password_hash));
+            memcpy(info->salt, salt, sizeof(salt));
+            fwrite(info, sizeof(Login_t), 1, pass);
             break;
         }
         repeat_error = 0;

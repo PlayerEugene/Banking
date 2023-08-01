@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "limits": "c",
-        "gmp.h": "c"
+        "gmp.h": "c",
+        "argon2.h": "c"
     }
 }

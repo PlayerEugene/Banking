@@ -76,6 +76,10 @@ int login() {
             token = strtok(line, " ");
             if (!strcmp(token, username)) {
                 found = 0;
+                //HERE!
+                // Get the stored hashed password from the file
+                token = strtok(NULL, " ");
+                //strcpy(stored_hashed_password, token); // assuming stored_hashed_password is char array
                 break;
             }
         }
@@ -90,7 +94,7 @@ int login() {
     found = 0;
     repeat = 0;
 
-    token = strtok(NULL, " ");
+    //token = strtok(NULL, " ");
 
     int i;
     int tries = 3;

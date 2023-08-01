@@ -40,6 +40,16 @@ typedef struct Account_
     char account_type;
 } Account_t;
 
+/**
+ * Login Info
+*/
+typedef struct Login_
+{
+    char username[51];
+    char password[51];
+    char salt[16];
+} Login_t;
+
 extern char username[51];
 extern Account_t curr_user;
 

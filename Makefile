@@ -15,10 +15,12 @@
 
 CC = gcc
 # CFLAGS = -I.
+GMP = -I"C:\Users\eugen\Downloads\projects\gmp-6.3.0" -L"C:\Users\eugen\Downloads\projects\gmp-6.3.0\.libs" -lgmp
+ARGON = -I"C:\Users\eugen\Downloads\projects\phc-winner-argon2\include" -L"C:\Users\eugen\Downloads\projects\phc-winner-argon2" -largon2
 SRCS = main.c account.c transaction.c login.c data_encoder.c data_decoder.c rsa.c
 
 make: $(SRCS)
-	$(CC) -o main $(SRCS) -I"C:\Users\eugen\Downloads\projects\gmp-6.3.0" -L"C:\Users\eugen\Downloads\projects\gmp-6.3.0\.libs" -lgmp
+	$(CC) -o main $(SRCS) $(GMP) $(ARGON)
 
 .PHONY: clean
 
