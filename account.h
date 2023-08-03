@@ -5,6 +5,7 @@
  * 
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
+ * 08/01/23  EL  Added Login struct
  * 07/07/23  EL  Initial Commit
  */
 
@@ -12,6 +13,42 @@
 #define __ACCOUNT_H__
 
 #include <stdio.h>
+
+// Defines
+enum {
+    MIN_NAME = 3,
+    MAX_NAME = 51,
+    FIRST_MONTH = 1,
+    LAST_MONTH = 12,
+    FIRST_DAY = 1,
+    LAST_DAY = 31,
+    START_YEAR = 1907,
+    END_YEAR = 2123,
+    SSN_LENGTH = 10,
+    PNUM_LENGTH = 11,
+    MIN_EMAIL = 6,
+    MAX_EMAIL = 255,
+    MIN_ADDRESS = 3,
+    MAX_ADDRESS = 254,
+    ZIP_LENGTH = 6,
+    STATE_LENGTH = 3,
+    MIN_PASS = 9,
+    MAX_PASS = 51,
+    ARGON2_OUT_LEN = 32,
+    SALT_LENGTH = 16,
+    TIME_COST = 3,
+    PARALLELISM = 1
+};
+
+/**
+ * Error Table
+*/
+enum {
+    NON_ERROR,
+    SYNTAX_ERROR,
+    LENGTH_ERROR,
+    FILE_ERROR
+};
 
 /**
  * Bank Account
@@ -53,7 +90,7 @@ typedef struct Login_
 extern char username[51];
 extern Account_t curr_user;
 
-int createAccount();
-void viewAccount();
+int create_account();
+void view_account();
 
 #endif /* __ACCOUNT_H__ */

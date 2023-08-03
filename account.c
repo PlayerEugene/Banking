@@ -8,6 +8,8 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 08/02/23  EL  Cleaned code for better readability
+ * 08/01/23  EL  Added hashing for password using Argon2
  * 07/21/23  EL  Added space protection for easier file reading
  * 07/20/23  EL  Added file handling to store user data and password
  * 07/16/23  EL  Refactored createAccount() to have separate functions
@@ -27,44 +29,42 @@
 #include "..\phc-winner-argon2\include\argon2.h"
 
 // Defines
-#define ARGON2_OUT_LEN 32
+#define REPEAT_ERROR 1
 
 // Function declarations
-int createAccount();
-void viewAccount();
-
-// maybe set to int in case of failure
-static void set_fname(Account_t* user);
-static void set_lname(Account_t* user);
-static void set_date(Account_t* user);
-static void set_ssn(Account_t* user);
-static void set_pnum(Account_t* user);
-static void set_email(Account_t* user);
-static void set_address(Account_t* user);
-static void set_zip(Account_t* user);
-static void set_state(Account_t* user);
-static void set_account(Account_t* user);
-static void set_username(Account_t* user);
+int create_account();
+void view_account();
+static int set_first_name(Account_t* user);
+static int set_last_name(Account_t* user);
+static int set_date_of_birth(Account_t* user);
+static int set_social_security_number(Account_t* user);
+static int set_phone_number(Account_t* user);
+static int set_email_address(Account_t* user);
+static int set_home_address(Account_t* user);
+static int set_zip_code(Account_t* user);
+static int set_state_of_residence(Account_t* user);
+static int set_account_type(Account_t* user);
+static int set_username(Account_t* user);
 static void set_password(Account_t* user, FILE* pass, Login_t* info);
 
-static int repeat_error = 0;
-static int syntax_error = 0;
-static int length_error = 0;
+static int repeat_error = NON_ERROR;
+static int error = NON_ERROR;
 static char buffer[256];
 
 /**
  * Account creator
  * 
- * Creates a new account with all necessary data filled in
+ * Creates a new account with all necessary requested and stores
+ * the data to be kept for later logins.
  * 
  * @return      0 if successful, 1 otherwise
  */
-int createAccount() {
-    
+int create_account() {
     FILE* fp;
     FILE* pass;
     Account_t user;
     Login_t info;
+    int return_value = 0;
     fp = fopen("userdata.txt", "a");
     pass = fopen("userpass.txt", "ab");
 
@@ -79,33 +79,66 @@ int createAccount() {
 // SECURITY QUESTIONS? HOW TO ADD TO ACCOUNTS!?
     printf("Creating a New Account\n\n");
  
-    set_fname(&user);
+    return_value = set_first_name(&user);
+    if (return_value == 1) {
+        return 1;
+    }
     
-    set_lname(&user);
+    return_value = set_last_name(&user);
+    if (return_value == 1) {
+        return 1;
+    }
 
-    set_date(&user);
+    return_value = set_date_of_birth(&user);
+    if (return_value == 1) {
+        return 1;
+    }
 
-    set_ssn(&user);
+    return_value = set_social_security_number(&user);
+    if (return_value == 1) {
+        return 1;
+    }
  
-    set_pnum(&user);
+    return_value = set_phone_number(&user);
+    if (return_value == 1) {
+        return 1;
+    }
  
-    set_email(&user);
+    return_value = set_email_address(&user);
+    if (return_value == 1) {
+        return 1;
+    }
 
-    set_address(&user);
+    return_value = set_home_address(&user);
+    if (return_value == 1) {
+        return 1;
+    }
     
-    set_zip(&user);
+    return_value = set_zip_code(&user);
+    if (return_value == 1) {
+        return 1;
+    }
 
-    set_state(&user);
+    return_value = set_state_of_residence(&user);
+    if (return_value == 1) {
+        return 1;
+    }
 
-    set_account(&user);
+    return_value = set_account_type(&user);
+    if (return_value == 1) {
+        return 1;
+    }
 
-    set_username(&user);
+    return_value = set_username(&user);
+    if (return_value == 1) {
+        return 1;
+    }
     strcpy(info.username, user.username);
     
     set_password(&user, pass, &info);
     fclose(pass);
     
-// PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
+    // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
     fprintf(fp, "%s %s %s %s %s %s %s %s %s %s %s %c %s\n", user.username, user.firstname,
         user.lastname, user.month, user.day, user.year, user.ssn, user.pnumber,
         user.email, user.zip, user.state, user.account_type, user.address);
@@ -123,10 +156,10 @@ int createAccount() {
  * 
  * Displays all account information and last 4 digits of SSN
 */
-void viewAccount() {
+void view_account() {
     printf("Account Info:\n");
     printf("Account Username: %s\n", curr_user.username);
-    printf("First Name: %s\nLast Name: %s\n", caesar_decrypt(curr_user.firstname), caesar_decrypt(curr_user.lastname));
+    printf("First Name: %s\nLast Name: %s\n", curr_user.firstname, curr_user.lastname);
     printf("Date of Birth: %s/%s/%s\n", curr_user.month, curr_user.day, curr_user.year);
     printf("SSN: *****%s\n", curr_user.ssn + strlen(curr_user.ssn) - 4);
     printf("Phone Number: %s\n", curr_user.pnumber);
@@ -147,45 +180,45 @@ void viewAccount() {
  * 
  * @param user the struct to set the first name to
 */
-static void set_fname(Account_t* user) {
+static int set_first_name(Account_t* user) {
     while(1) {
         printf("Enter First Name: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%50s", &user->firstname);
 
-        // name has at least 1 char (make this into a defined magic number too)
-        if (strlen(buffer) < 3 || strlen(buffer) > 51) {
-            length_error = 1;
+        // name has at least 1 char
+        if (strlen(buffer) < MIN_NAME || strlen(buffer) > MAX_NAME) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->firstname); k++) {
             if (!isalpha(user->firstname[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
                 break;
             }
         }
         // maybe split these to say appropriate errors later
         // like invalid characters for syntax
         // and too short/long for length
-        if (syntax_error || length_error) {
+        if (error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid first name. Try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
     user->firstname[0] = toupper(user->firstname[0]);
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -195,41 +228,41 @@ static void set_fname(Account_t* user) {
  * 
  * @param user the struct to set the last name to
 */
-static void set_lname(Account_t* user) {
+static int set_last_name(Account_t* user) {
     while(1) {
         printf("Enter Last Name: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%50s", &user->lastname);
 
-        if (strlen(buffer) < 3 || strlen(buffer) > 51) {
-            length_error = 1;
+        if (strlen(buffer) < MIN_NAME || strlen(buffer) > MAX_NAME) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->lastname); k++) {
             if (!isalpha(user->lastname[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
                 break;
             }
         }
-        if (syntax_error || length_error) {
+        if (error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (repeat_error == 0) {
+            if (!repeat_error) {
                 printf("Invalid last name. Try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            length_error = 0;
-            syntax_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
     user->lastname[0] = toupper(user->lastname[0]);
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -240,25 +273,23 @@ static void set_lname(Account_t* user) {
  * 
  * @param user the struct to set the DOB to
 */
-static void set_date(Account_t* user) {
+static int set_date_of_birth(Account_t* user) {
     char date[11];
     while (1) {
         int num_slash = 0;
-        int invalid_month = 0;
-        int invalid_day = 0;
-        int invalid_year = 0;
         printf("Enter Date of Birth: \n");
-        if (repeat_error == 0) {
+        if (!repeat_error) {
             printf("Enter in MM/DD/YYYY format\n");
         }
 
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%10s", &date);
 
         if (strlen(buffer) != 11) {
-            length_error = 1;
+            error = LENGTH_ERROR;
         }
 
         //change 2 and 5 to defines (spots where there should be slashes)
@@ -273,47 +304,45 @@ static void set_date(Account_t* user) {
             }
             else {
                 if (!isdigit(date[k])) {
-                    syntax_error = 1;
+                    error = SYNTAX_ERROR;
                     break;
                 }
             }
         }
 
-
-
-        if (num_slash != 2 || length_error || syntax_error) {
+        if (num_slash != 2 || error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (repeat_error == 0) {
+            if (!repeat_error) {
                 printf("\033[2K\033[A");
                 printf("Invalid date. Please put in MM/DD/YYYY format\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             strcpy(user->month, strtok(date, "/"));
             strcpy(user->day, strtok(NULL, "/"));
             strcpy(user->year, strtok(NULL, "/"));
             // defines here too
-            if (atoi(user->month) > 12 || atoi(user->month) < 1) {
-                invalid_month = 1;
+            if (atoi(user->month) > LAST_MONTH || atoi(user->month) < FIRST_MONTH) {
+                error = SYNTAX_ERROR;
             }
-            if (atoi(user->day) > 31 || atoi(user->day) < 1) {
-                invalid_day = 1;
+            if (atoi(user->day) > LAST_DAY || atoi(user->day) < FIRST_DAY) {
+                error = SYNTAX_ERROR;
             }
-            // todays year and the oldest person alive right now
-            if (atoi(user->year) > 2023 || atoi(user->year) < 1907) {
-                invalid_year = 1;
+            // 100 years in the future and the oldest person alive right now
+            if (atoi(user->year) > END_YEAR || atoi(user->year) < START_YEAR) {
+                error = SYNTAX_ERROR;
             }
 
-            if (invalid_month || invalid_day || invalid_year) {
+            if (error) {
                 printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-                if (repeat_error == 0) {
+                if (!repeat_error) {
                     printf("\033[2K\033[A");
                     printf("Invalid date. Please put in MM/DD/YYYY format\n");
-                    repeat_error = 1;
+                    repeat_error = REPEAT_ERROR;
                 }
+                error = NON_ERROR;
             }
             else {
                 break;
@@ -321,9 +350,9 @@ static void set_date(Account_t* user) {
         }
         
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -333,42 +362,42 @@ static void set_date(Account_t* user) {
  * 
  * @param user the struct to set the ssn to
 */
-static void set_ssn(Account_t* user) {
+static int set_social_security_number(Account_t* user) {
     while (1) {
         printf("Enter Social Security Number: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%9s", &user->ssn);
 
-        if (strlen(buffer) != 10) {
-            length_error = 1;
+        if (strlen(buffer) != SSN_LENGTH) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->ssn); k++) {
             if (!isdigit(user->ssn[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
                 break;
             }
         }
 
         
-        if (length_error || syntax_error) {
+        if (error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (repeat_error == 0) {
+            if (!repeat_error) {
                 printf("Invalid Social Security Number. Please try again!\n");
-                repeat_error = 1;
+                repeat_error = repeat_error;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -378,41 +407,41 @@ static void set_ssn(Account_t* user) {
  * 
  * @param user the struct to set the phone number to
 */
-static void set_pnum(Account_t* user) {
+static int set_phone_number(Account_t* user) {
     while (1) {
         printf("Enter Phone Number: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%10s", &user->pnumber);
 
-        if (strlen(buffer) != 11) {
-            length_error = 1;
+        if (strlen(buffer) != PNUM_LENGTH) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->pnumber); k++) {
             if (!isdigit(user->pnumber[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
                 break;
             }
         }
 
-        if (length_error || syntax_error) {
+        if (error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (repeat_error == 0) {
+            if (!repeat_error) {
                 printf("Invalid phone number. Please try again!\n");
-                repeat_error = 1;
+                repeat_error = repeat_error;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -422,7 +451,7 @@ static void set_pnum(Account_t* user) {
  * 
  * @param user the struct to set the email to
 */
-static void set_email(Account_t* user) {
+static int set_email_address(Account_t* user) {
     while (1) {
         int has_at = 0;
         int has_period = 0;
@@ -432,16 +461,17 @@ static void set_email(Account_t* user) {
         printf("Enter E-mail: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%254s", &user->email);
 
-        if (strlen(buffer) > 255 || strlen(buffer) < 6) {
-            length_error = 1;
+        if (strlen(buffer) > MAX_EMAIL || strlen(buffer) < MIN_EMAIL) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->email); k++) {
             if(isspace(user->email[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
             }
             else if (k == 0) {
                 if (user->email[k] != '@') {
@@ -469,22 +499,21 @@ static void set_email(Account_t* user) {
 
         // could set the name at address period and domain to syntax error
         if (!has_name || !has_at || !has_address
-            || !has_period || !has_domain || length_error || syntax_error) {
+            || !has_period || !has_domain || error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (repeat_error == 0) {
+            if (!repeat_error) {
                 printf("Invalid e-mail address. Please try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
-    syntax_error = 0;
-    length_error = 0;
+    error = NON_ERROR;
     repeat_error = 0;
+    return NON_ERROR;
 }
 
 /**
@@ -494,7 +523,7 @@ static void set_email(Account_t* user) {
  * 
  * @param user the struct to set the address to
 */
-static void set_address(Account_t* user) {
+static int set_home_address(Account_t* user) {
     while (1) {
         int has_num = 0;
         int has_nonalpha = 0;
@@ -503,12 +532,13 @@ static void set_address(Account_t* user) {
         // ODD HERE WHY DIFFERENT?
         if (fgets(user->address, 254, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         user->address[strcspn(user->address, "\r\n")] = '\0';
         //sscanf(buffer, "%225s", &user->address);
     
-        if (strlen(user->address) > 254 || strlen(user->address) < 3) {
-            length_error = 1;
+        if (strlen(user->address) > MAX_ADDRESS || strlen(user->address) < MIN_ADDRESS) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->address); k++) {
@@ -530,20 +560,21 @@ static void set_address(Account_t* user) {
             has_street = 1;
         }
 
-        if (!has_num || !has_street || length_error) {
+        if (!has_num || !has_street || error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
-            if (repeat_error == 0) {
+            if (!repeat_error) {
                 printf("Invalid street address. Please try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -553,41 +584,41 @@ static void set_address(Account_t* user) {
  * 
  * @param user the struct to set the zip code to
 */
-static void set_zip(Account_t* user) {
+static int set_zip_code(Account_t* user) {
     while (1) {
         printf("Enter Zip Code: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%5s", &user->zip);
 
-        if (strlen(buffer) != 6) {
-            length_error = 1;
+        if (strlen(buffer) != ZIP_LENGTH) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->zip); k++) {
             if (!isdigit(user->zip[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
                 break;
             }
         }
 
-        if (syntax_error || length_error) {
+        if (error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid zip code. Try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             break;
         }
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -597,26 +628,28 @@ static void set_zip(Account_t* user) {
  * 
  * @param user the struct to set the state to
 */
-static void set_state(Account_t* user) {
+static int set_state_of_residence(Account_t* user) {
     FILE* state;
     char buf[171];
     state = fopen("states.txt", "r");
     if (state == NULL) {
-        exit(0);
+        return FILE_ERROR;
     }
-    if (fgets(buf, 171, state) != NULL) {
+    if (fgets(buf, 171, state) == NULL) {
         // handle file error here
+        return FILE_ERROR;
     }
     int invalid_state = 0;
     while (1) {
         printf("Enter State: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%2s", &user->state);
 
-        if (strlen(buffer) != 3) {
-            length_error = 1;
+        if (strlen(buffer) != STATE_LENGTH) {
+            error = LENGTH_ERROR;
         }
         
         user->state[0] = toupper(user->state[0]);
@@ -628,13 +661,13 @@ static void set_state(Account_t* user) {
             invalid_state = 1;
         }
 
-        if (invalid_state || length_error) {
+        if (invalid_state || error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid state. Try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            length_error = 0;
+            error = NON_ERROR;
             invalid_state = 0;
         }
         else {
@@ -642,8 +675,9 @@ static void set_state(Account_t* user) {
         }
     }
     fclose(state);
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -654,41 +688,43 @@ static void set_state(Account_t* user) {
  * 
  * @param user the struct to set the account type to
 */
-static void set_account(Account_t* user) {
+static int set_account_type(Account_t* user) {
     while (1) {
         int valid_input = 0;
         printf("Enter Account Type: \n");
         printf("Input 'c' for checking account and 's' for savings account\n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%c", &user->account_type);
 
         if (strlen(buffer) != 2) {
-            length_error = 1;
+            error = LENGTH_ERROR;
         }
 
+        // 'c' for checking, 's' for saving
         if (tolower(user->account_type) != 'c'
             && tolower(user->account_type) != 's') {
             valid_input = 1;
         }
 
-        if (valid_input || length_error) {
+        if (valid_input || error) {
             printf("\033[2K\033[A\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid account type. Try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            length_error = 0;
+            error = NON_ERROR;
             valid_input = 0;
         }
         else {
             break;
         }
     }
-    length_error = 0;
-    repeat_error = 0;
-
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -698,44 +734,44 @@ static void set_account(Account_t* user) {
  * 
  * @param user the struct to set the username to
 */
-static void set_username(Account_t* user) {
+static int set_username(Account_t* user) {
     while (1) {
         printf("Enter Desired Username: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
             /* handle error */
+            return FILE_ERROR;
         }
         sscanf(buffer, "%50s", &user->username);
 
-        if (strlen(buffer) < 2 || strlen(buffer) > 51) {
-            length_error = 1;
+        if (strlen(buffer) < MIN_NAME || strlen(buffer) > MAX_NAME) {
+            error = LENGTH_ERROR;
         }
 
         for(int k = 0; k < strlen(user->username); k++) {
             if (isspace(user->username[k])) {
-                syntax_error = 1;
+                error = SYNTAX_ERROR;
                 break;
             }
         }
         // maybe split these to say appropriate errors later
         // like invalid characters for syntax
         // and too short/long for length
-        if (syntax_error || length_error) {
+        if (error) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid username. Try again!\n");
-                repeat_error = 1;
+                repeat_error = REPEAT_ERROR;
             }
-            syntax_error = 0;
-            length_error = 0;
+            error = NON_ERROR;
         }
         else {
             
             break;
         }
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
+    return NON_ERROR;
 }
 
 /**
@@ -794,7 +830,8 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
             password[0] = '\0';
             confirm[0] = '\0';
             printf("Enter Desired Password: \n");
-            for (i = 0; i < 50; i++) {
+            // Max namesize - null terminator (1)
+            for (i = 0; i < (MAX_NAME - 1); i++) {
                 c = getch();
                 // 8 is backspace in ASCII
                 if (c == 8) {
@@ -821,8 +858,8 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
             password[i] = '\0';
             printf("\n");
 
-            if (strlen(password) < 9 || strlen(password) > 51) {
-                length_error = 1;
+            if (strlen(password) < MIN_PASS || strlen(password) > MAX_PASS) {
+                error = LENGTH_ERROR;
             }
 
             for (int k = 0; k < strlen(password); k++) {
@@ -840,23 +877,23 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
                 }
             }
 
-            if (!has_upper || !has_lower || !has_num || !has_punct || length_error) {
+            if (!has_upper || !has_lower || !has_num || !has_punct || error) {
                 printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
                 if (!repeat_error) {
                     if (pass_error) {
                         printf("\033[2K\033[A\033[2K");
                     }
                     printf("Invalid password. Try again!\n");
-                    repeat_error = 1;
+                    repeat_error = REPEAT_ERROR;
                 }
-                length_error = 0;
+                error = NON_ERROR;
             }
             else {
                 break;
             }
         }
-        length_error = 0;
-        repeat_error = 0;
+        error = NON_ERROR;
+        repeat_error = NON_ERROR;
         
         printf("Confirm Password: \n");
         for (j = 0; j < 50; j++) {
@@ -895,13 +932,12 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
         else {
             char password_hash[ARGON2_OUT_LEN]; // Array to store the hash result
             //const char* salt = user->username;
-            uint8_t salt[16];
-            generate_salt(salt, 16);
-            const int t_cost = 3; // Time cost parameter
-            const int m_cost = 1 << 16; // Memory cost parameter
-            const int parallelism = 1; // Parallelism factor
+            uint8_t salt[SALT_LENGTH];
+            generate_salt(salt, SALT_LENGTH);
 
-            int ret = argon2_hash(t_cost, m_cost, parallelism, password, strlen(password),
+            const int m_cost = 1 << 16; // Memory cost parameter
+
+            int ret = argon2_hash(TIME_COST, m_cost, PARALLELISM, password, strlen(password),
                                 salt, strlen(salt), password_hash, ARGON2_OUT_LEN, NULL, 0, Argon2_i, ARGON2_VERSION_NUMBER);
             if (ret != ARGON2_OK) {
                 printf("Error hashing password: %s\n", argon2_error_message(ret));

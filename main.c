@@ -46,7 +46,7 @@ int main() {
 
             switch(choice) {
                 case '1':
-                    invalidAcc = createAccount();
+                    invalidAcc = create_account();
                     break;
 
                 case '2':
@@ -104,7 +104,7 @@ int main() {
                 break;
 
             case '4':
-                viewAccount();
+                view_account();
                 printf("Press any key to leave\n");
                 if (fgets(buffer, sizeof buffer, stdin) == NULL) {
                     /* handle error */

@@ -8,6 +8,7 @@
 #
 # DATE      WHO DESCRIPTION
 # -----------------------------------------------------------------------------
+# 08/01/23  EL  Added Argon and Gmp libraries for security
 # 07/24/23  EL  Added Source Files
 # 07/11/23  EL  Initial Commit
 # 
