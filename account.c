@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 08/03/23  EL  Fixed Argon2 hashing and changed from raw to encoded format
  * 08/02/23  EL  Cleaned code for better readability
  * 08/01/23  EL  Added hashing for password using Argon2
  * 07/21/23  EL  Added space protection for easier file reading
@@ -136,6 +137,7 @@ int create_account() {
     strcpy(info.username, user.username);
     
     set_password(&user, pass, &info);
+    fflush(pass);
     fclose(pass);
     
     // PUT THIS AFTER THE ACCOUNT CREATION IS SUCCESSFUL
@@ -782,9 +784,10 @@ static int set_username(Account_t* user) {
  * @param salt the location to store the salt
  * @param salt_len the length of the salt 
 */
-void generate_salt(uint8_t* salt, size_t salt_len) {
+void generate_salt(char* salt, size_t salt_len) {
     for (size_t i = 0; i < salt_len; i++) {
         salt[i] = rand() % 256;
+        //salt[i] = i + 50;
     }
 }
 
@@ -797,9 +800,9 @@ void generate_salt(uint8_t* salt, size_t salt_len) {
  * @param data the character array to be read
  * @param length the length of the array
 */
-void printHex(const unsigned char* data, size_t length) {
+void print_hex(const char* data, size_t length) {
     for (size_t i = 0; i < length; i++) {
-        printf("%02X", data[i]);
+        printf("%02X", (unsigned char)data[i]);
     }
     printf("\n");
 }
@@ -930,15 +933,18 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
             }
         }
         else {
-            char password_hash[ARGON2_OUT_LEN]; // Array to store the hash result
+            // (16 + strlen("$argon2i$v=19$m=65536,t=3,p=1$") + 24 + 32 + 1 + 1)
+            char password_hash[100]; // Array to store the hash result
             //const char* salt = user->username;
-            uint8_t salt[SALT_LENGTH];
+            char salt[SALT_LENGTH];
             generate_salt(salt, SALT_LENGTH);
 
             const int m_cost = 1 << 16; // Memory cost parameter
 
-            int ret = argon2_hash(TIME_COST, m_cost, PARALLELISM, password, strlen(password),
-                                salt, strlen(salt), password_hash, ARGON2_OUT_LEN, NULL, 0, Argon2_i, ARGON2_VERSION_NUMBER);
+            //printf("\npass: %s, size: %d", password, strlen(password));
+
+            int ret = argon2_hash(TIME_COST, m_cost, PARALLELISM, password, strlen(password), salt, SALT_LENGTH,
+                       NULL, ARGON2_OUT_LEN, password_hash, sizeof(password_hash), Argon2_i, ARGON2_VERSION_NUMBER);
             if (ret != ARGON2_OK) {
                 printf("Error hashing password: %s\n", argon2_error_message(ret));
                 // Handle error and return if necessary
@@ -946,13 +952,17 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
             }
 
             /*printf("Hashed Password: ");
-            printHex(password_hash, ARGON2_OUT_LEN);
+            print_hex(password_hash, ARGON2_OUT_LEN);
 
             printf("Salt: ");
-            printHex(salt, 16);*/
+            print_hex(salt, 16);*/
+            //printf("\n%s", password_hash);
 
             memcpy(info->password, password_hash, sizeof(password_hash));
-            memcpy(info->salt, salt, sizeof(salt));
+
+            if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            /* handle error */
+            }
             fwrite(info, sizeof(Login_t), 1, pass);
             break;
         }

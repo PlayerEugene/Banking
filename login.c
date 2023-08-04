@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 08/03/23  EL  Added Argon2 verification from encoded string and fixed output
  * 07/27/23  EL  Fixed password backspace inconsistency
  * 07/26/23  EL  Added documentation
  * 07/25/23  EL  Added logout functionality
@@ -22,6 +23,7 @@
 #include <conio.h>
 #include "login.h"
 #include "data_decoder.h"
+#include "..\phc-winner-argon2\include\argon2.h"
 
 static const Account_t EmptyAccount;
 static const Balance_t EmptyBalance;
@@ -29,6 +31,12 @@ static const Balance_t EmptyBalance;
 // Function declarations
 int login();
 int logout();
+
+void printHEX(const unsigned char *data, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        printf("%02x", data[i]);
+    }
+}
 
 /**
  * Logs into an account
@@ -49,6 +57,7 @@ int login() {
 
     FILE* fp;
     char line[256];
+    Login_t info;
     char* token;
     int found = 1;
     int repeat = 0;
@@ -64,25 +73,21 @@ int login() {
         }
         sscanf(buffer, "%50s", username);
 
-        fp = fopen("userpass.txt", "r");
+        fp = fopen("userpass.txt", "rb");
 
         if (fp == NULL) {
             printf("Couldn't open file\n");
             return 1;
         }
 
-        
-        while (fgets(line, sizeof(line), fp) != NULL) {
-            token = strtok(line, " ");
-            if (!strcmp(token, username)) {
+        while (fread(&info, sizeof(Login_t), 1, fp)) {
+            if (strcmp(username, info.username) == 0) {
                 found = 0;
-                //HERE!
-                // Get the stored hashed password from the file
-                token = strtok(NULL, " ");
-                //strcpy(stored_hashed_password, token); // assuming stored_hashed_password is char array
                 break;
             }
         }
+        fclose(fp);
+
         if (found) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat) {
@@ -133,10 +138,20 @@ int login() {
             length_error = 1;
         }
 
-        // getting rid of newline at the end of password
-        token[strcspn(token, "\r\n")] = '\0';
+        //char full_hash[512];
+        const int m_cost = 1 << 16; // Memory cost parameter
 
-        if (strcmp(token, password)) { // decrypt token here
+        /*printf("%s\n", full_hash); // Print the full_hash for debugging
+        printf("password %s password", password);
+        printf("Hashed Password: ");
+        printHEX(info.password, ARGON2_OUT_LEN);
+
+        printf("Salt: ");
+        printHEX(info.salt, 16);*/
+        // printf("%s", info.password);
+        // int print = argon2_verify(info.password, password, strlen(password), Argon2_i);
+        // printf("print: %d", print);
+        if (argon2_verify(info.password, password, strlen(password), Argon2_i)) {
             syntax_error = 1;
         }
 
@@ -170,7 +185,7 @@ int login() {
     FILE* user_data;
     char* user_found;
     Account_t load_user;
-    user_data = fopen("userpass.txt", "r");
+    user_data = fopen("userpass.txt", "rb");
 
     if (user_data == NULL) {
         printf("Couldn't open user data file\n");
@@ -187,6 +202,7 @@ int login() {
     }
 
     strcpy(load_user.username, user_found);
+    fclose(user_data);
     // do rest
 
     return 0;

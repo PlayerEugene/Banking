@@ -5,6 +5,7 @@
  * 
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
+ * 08/03/23  EL  Changed Login struct to fit encoded from raw
  * 08/01/23  EL  Added Login struct
  * 07/07/23  EL  Initial Commit
  */
@@ -56,23 +57,23 @@ enum {
 typedef struct Account_
 {
     //username
-    char username[51];
+    char username[MAX_NAME];
     // name
-    char firstname[51];
-    char lastname[51];
+    char firstname[MAX_NAME];
+    char lastname[MAX_NAME];
     // DOB
     char day[3];
     char month[3];
     char year[5];
     // personal information
-    char ssn[10];
-    char pnumber[11];
-    char email[255];
+    char ssn[SSN_LENGTH];
+    char pnumber[PNUM_LENGTH];
+    char email[MAX_EMAIL];
     // location
     char address[255];
-    char zip[6];
+    char zip[ZIP_LENGTH];
     // for the state code EX: CA, and string terminator '\0'
-    char state[3];
+    char state[STATE_LENGTH];
     // c for checking, s for saving
     char account_type;
 } Account_t;
@@ -82,12 +83,11 @@ typedef struct Account_
 */
 typedef struct Login_
 {
-    char username[51];
-    char password[51];
-    char salt[16];
+    char username[MAX_NAME];
+    char password[100];
 } Login_t;
 
-extern char username[51];
+extern char username[MAX_NAME];
 extern Account_t curr_user;
 
 int create_account();
