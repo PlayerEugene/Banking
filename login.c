@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 08/11/23  EL  Fixed Login information
  * 08/03/23  EL  Added Argon2 verification from encoded string and fixed output
  * 07/27/23  EL  Fixed password backspace inconsistency
  * 07/26/23  EL  Added documentation
@@ -31,12 +32,6 @@ static const Balance_t EmptyBalance;
 // Function declarations
 int login();
 int logout();
-
-void printHEX(const unsigned char *data, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        printf("%02x", data[i]);
-    }
-}
 
 /**
  * Logs into an account
@@ -99,8 +94,6 @@ int login() {
     found = 0;
     repeat = 0;
 
-    //token = strtok(NULL, " ");
-
     int i;
     int tries = 3;
     char c;
@@ -138,16 +131,8 @@ int login() {
             length_error = 1;
         }
 
-        //char full_hash[512];
         const int m_cost = 1 << 16; // Memory cost parameter
 
-        /*printf("%s\n", full_hash); // Print the full_hash for debugging
-        printf("password %s password", password);
-        printf("Hashed Password: ");
-        printHEX(info.password, ARGON2_OUT_LEN);
-
-        printf("Salt: ");
-        printHEX(info.salt, 16);*/
         // printf("%s", info.password);
         // int print = argon2_verify(info.password, password, strlen(password), Argon2_i);
         // printf("print: %d", print);
@@ -185,7 +170,7 @@ int login() {
     FILE* user_data;
     char* user_found;
     Account_t load_user;
-    user_data = fopen("userpass.txt", "rb");
+    user_data = fopen("userdata.txt", "rb");
 
     if (user_data == NULL) {
         printf("Couldn't open user data file\n");
@@ -193,17 +178,83 @@ int login() {
     }
 
     
-    while (fgets(line, sizeof(line), fp) != NULL) {
+    while (fgets(line, sizeof(line), user_data) != NULL) {
         user_found = strtok(line, " ");
         if (!strcmp(user_found, username)) {
             found = 0;
             break;
         }
     }
+    fclose(user_data);
 
     strcpy(load_user.username, user_found);
-    fclose(user_data);
-    // do rest
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token first name\n");
+    }
+    strcpy(load_user.firstname, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token last name\n");
+    }
+    strcpy(load_user.lastname, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token month\n");
+    }
+    strcpy(load_user.month, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token day\n");
+    }
+    strcpy(load_user.day, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token year\n");
+    }
+    strcpy(load_user.year, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token ssn\n");
+    }
+    strcpy(load_user.ssn, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token pnum\n");
+    }
+    strcpy(load_user.pnumber, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token email\n");
+    }
+    strcpy(load_user.email, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token zip\n");
+    }
+    strcpy(load_user.zip, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token");
+    }
+    strcpy(load_user.state, token);
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        printf("invalid token account type\n");
+    }
+    load_user.account_type = token[0];
+    // Extract the rest of the string (including address)
+    char address[256] = "";
+    while ((token = strtok(NULL, " ")) != NULL) {
+        strcat(address, token);
+        strcat(address, " "); // Add the delimiter back
+    }
+
+    // Remove newline at the end
+    size_t len = strcspn(address, "\n");
+    address[len] = '\0';
+    strcpy(load_user.address, address);
+    curr_user = load_user;
 
     return 0;
 }

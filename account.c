@@ -8,6 +8,7 @@
  * DATE      WHO DESCRIPTION
  * ----------------------------------------------------------------------------
  * NEW MODIFICTIONS
+ * 08/11/23  EL  Added random salting using windows
  * 08/03/23  EL  Fixed Argon2 hashing and changed from raw to encoded format
  * 08/02/23  EL  Cleaned code for better readability
  * 08/01/23  EL  Added hashing for password using Argon2
@@ -24,6 +25,7 @@
 #include <string.h>
 #include <conio.h>
 #include <ctype.h>
+#include <windows.h>
 #include "account.h"
 #include "data_encoder.h"
 #include "data_decoder.h"
@@ -389,7 +391,7 @@ static int set_social_security_number(Account_t* user) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid Social Security Number. Please try again!\n");
-                repeat_error = repeat_error;
+                repeat_error = REPEAT_ERROR;
             }
             error = NON_ERROR;
         }
@@ -433,7 +435,7 @@ static int set_phone_number(Account_t* user) {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat_error) {
                 printf("Invalid phone number. Please try again!\n");
-                repeat_error = repeat_error;
+                repeat_error = REPEAT_ERROR;
             }
             error = NON_ERROR;
         }
@@ -785,10 +787,19 @@ static int set_username(Account_t* user) {
  * @param salt_len the length of the salt 
 */
 void generate_salt(char* salt, size_t salt_len) {
-    for (size_t i = 0; i < salt_len; i++) {
-        salt[i] = rand() % 256;
-        //salt[i] = i + 50;
+    HCRYPTPROV hCryptProv;
+    if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+        // Handle error
+        exit(1);
     }
+
+    if (!CryptGenRandom(hCryptProv, salt_len, salt)) {
+        // Handle error
+        CryptReleaseContext(hCryptProv, 0);
+        exit(1);
+    }
+
+    CryptReleaseContext(hCryptProv, 0);
 }
 
 /**
@@ -935,13 +946,10 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
         else {
             // (16 + strlen("$argon2i$v=19$m=65536,t=3,p=1$") + 24 + 32 + 1 + 1)
             char password_hash[100]; // Array to store the hash result
-            //const char* salt = user->username;
             char salt[SALT_LENGTH];
             generate_salt(salt, SALT_LENGTH);
 
             const int m_cost = 1 << 16; // Memory cost parameter
-
-            //printf("\npass: %s, size: %d", password, strlen(password));
 
             int ret = argon2_hash(TIME_COST, m_cost, PARALLELISM, password, strlen(password), salt, SALT_LENGTH,
                        NULL, ARGON2_OUT_LEN, password_hash, sizeof(password_hash), Argon2_i, ARGON2_VERSION_NUMBER);
@@ -951,18 +959,11 @@ static void set_password(Account_t* user, FILE* pass, Login_t* info) {
                 return;
             }
 
-            /*printf("Hashed Password: ");
-            print_hex(password_hash, ARGON2_OUT_LEN);
-
-            printf("Salt: ");
-            print_hex(salt, 16);*/
-            //printf("\n%s", password_hash);
-
             memcpy(info->password, password_hash, sizeof(password_hash));
 
-            if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-            /* handle error */
-            }
+            // if (fgets(buffer, sizeof buffer, stdin) == NULL) {
+            // /* handle error */
+            // }
             fwrite(info, sizeof(Login_t), 1, pass);
             break;
         }
