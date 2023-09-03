@@ -26,6 +26,10 @@
 #include "data_decoder.h"
 #include "..\phc-winner-argon2\include\argon2.h"
 
+// Defines
+#define REPEAT_ERROR 1
+#define ATTEMPT_LIMIT_ERROR 6
+
 static const Account_t EmptyAccount;
 static const Balance_t EmptyBalance;
 
@@ -39,23 +43,22 @@ int logout();
  * Checks file to see if username and corresponding
  * password exists
  * 
- * @return 1 if login error, 0 if successful
+ * @return 0 if successful, otherwise login error
 */
 int login() {
     char username[51];
     char password[51];
     char buffer[256];
 
-    int length_error = 0;
-    int syntax_error = 0;
-    int repeat_error = 0;
+    int error = NON_ERROR;
+    int repeat_error = NON_ERROR;
 
     FILE* fp;
     char line[256];
     Login_t info;
     char* token;
     int found = 1;
-    int repeat = 0;
+    int repeat = NON_ERROR;
 
     system("cls");
 
@@ -64,7 +67,7 @@ int login() {
     while (found) {
         printf("Enter Username: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-            /* handle error */
+            return SYNTAX_ERROR;
         }
         sscanf(buffer, "%50s", username);
 
@@ -72,7 +75,7 @@ int login() {
 
         if (fp == NULL) {
             printf("Couldn't open file\n");
-            return 1;
+            return FILE_ERROR;
         }
 
         while (fread(&info, sizeof(Login_t), 1, fp)) {
@@ -87,12 +90,12 @@ int login() {
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             if (!repeat) {
                 printf("Could not find username\n");\
-                repeat = 1;
+                repeat = REPEAT_ERROR;
             }
         }
     }
     found = 0;
-    repeat = 0;
+    repeat = NON_ERROR;
 
     int i;
     int tries = 3;
@@ -127,8 +130,8 @@ int login() {
         password[i] = '\0';
         printf("\n");
 
-        if (strlen(password) < 9 || strlen(password) > 51) {
-            length_error = 1;
+        if (strlen(password) < MIN_PASS || strlen(password) > MAX_PASS) {
+            error = LENGTH_ERROR;
         }
 
         const int m_cost = 1 << 16; // Memory cost parameter
@@ -137,33 +140,31 @@ int login() {
         // int print = argon2_verify(info.password, password, strlen(password), Argon2_i);
         // printf("print: %d", print);
         if (argon2_verify(info.password, password, strlen(password), Argon2_i)) {
-            syntax_error = 1;
+            error = SYNTAX_ERROR;
         }
 
 
-        if (syntax_error || length_error) {
+        if (error) {
             if (repeat_error) {
                 printf("\033[2K\033[A");
             }
             printf("\033[2K\033[A\33[2K\033[A\33[2K\r");
             printf("Incorrect password. %d tries remaining\n", tries);
-            syntax_error = 0;
-            length_error = 0;
-            repeat_error = 1;
+            error = NON_ERROR;
+            repeat_error = REPEAT_ERROR;
         }
         else {
             break;
         }
         tries--;
     }
-    syntax_error = 0;
-    length_error = 0;
-    repeat_error = 0;
+    error = NON_ERROR;
+    repeat_error = NON_ERROR;
 
     if (tries <= 0) {
         printf("\33[2K\033[A\33[2K\r");
         printf("Failed Login\n");
-        return 1;
+        return ATTEMPT_LIMIT_ERROR;
     }
 
     // LOAD INFORMATION INTO curr_user
@@ -174,7 +175,7 @@ int login() {
 
     if (user_data == NULL) {
         printf("Couldn't open user data file\n");
-        return 1;
+        return FILE_ERROR;
     }
 
     
@@ -256,7 +257,7 @@ int login() {
     strcpy(load_user.address, address);
     curr_user = load_user;
 
-    return 0;
+    return NON_ERROR;
 }
 
 /**
@@ -270,5 +271,5 @@ int logout() {
     strcpy(username, "");
     curr_user = EmptyAccount;
     balance = EmptyBalance;
-    return 0;
+    return NON_ERROR;
 }

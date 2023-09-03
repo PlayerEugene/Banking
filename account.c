@@ -60,20 +60,20 @@ static char buffer[256];
  * Creates a new account with all necessary requested and stores
  * the data to be kept for later logins.
  * 
- * @return      0 if successful, 1 otherwise
+ * @return      0 if successful, otherwise account creation error
  */
 int create_account() {
     FILE* fp;
     FILE* pass;
     Account_t user;
     Login_t info;
-    int return_value = 0;
+    int ret_val = 0;
     fp = fopen("userdata.txt", "a");
     pass = fopen("userpass.txt", "ab");
 
     if (fp == NULL || pass == NULL) {
         printf("Couldn't open file\n");
-        return 1;
+        return FILE_ERROR;
     }
  
     // moves cursor to top left
@@ -82,59 +82,59 @@ int create_account() {
 // SECURITY QUESTIONS? HOW TO ADD TO ACCOUNTS!?
     printf("Creating a New Account\n\n");
  
-    return_value = set_first_name(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_first_name(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
     
-    return_value = set_last_name(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_last_name(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
 
-    return_value = set_date_of_birth(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_date_of_birth(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
 
-    return_value = set_social_security_number(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_social_security_number(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
  
-    return_value = set_phone_number(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_phone_number(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
  
-    return_value = set_email_address(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_email_address(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
 
-    return_value = set_home_address(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_home_address(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
     
-    return_value = set_zip_code(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_zip_code(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
 
-    return_value = set_state_of_residence(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_state_of_residence(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
 
-    return_value = set_account_type(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_account_type(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
 
-    return_value = set_username(&user);
-    if (return_value == 1) {
-        return 1;
+    ret_val = set_username(&user);
+    if (ret_val != 0) {
+        return ret_val;
     }
     strcpy(info.username, user.username);
     
@@ -152,7 +152,7 @@ int create_account() {
     // caesar_decrypt(user.firstname);
     // caesar_decrypt(user.lastname);
     strcpy(username, user.username);
-    return 0;
+    return NON_ERROR;
 }
 
 /**
@@ -188,7 +188,6 @@ static int set_first_name(Account_t* user) {
     while(1) {
         printf("Enter First Name: \n");
         if (fgets(buffer, sizeof buffer, stdin) == NULL) {
-            /* handle error */
             return FILE_ERROR;
         }
         sscanf(buffer, "%50s", &user->firstname);
